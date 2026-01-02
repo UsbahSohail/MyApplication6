@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">My Application</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Amazon Prime</string>
+    <string name="nav_header_subtitle">prime.user@amazon.com</string>
+    <string name="nav_header_desc">Amazon navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_gallery">Gallery</string>
+    <string name="menu_slideshow">Slideshow</string>
+    <string name="menu_section_screens">App Screens</string>
+    <string name="menu_products">Product Catalog</string>
+    <string name="menu_fragments">Color Fragments</string>
+    <string name="menu_data_send">Send Data</string>
+    <string name="menu_user_info">User Info</string>
+    <string name="menu_drawer_demo">Drawer Demo</string>
+    <string name="menu_login">Login Screen</string>
+    <string name="menu_signup">Signup Screen</string>
+    <string name="menu_sign_out">Sign Out</string>
+    <string name="data_receive_empty">No profile was received. Please go back and fill the form.</string>
+    <string name="data_receive_name">Name: %1$s</string>
+    <string name="data_receive_age">Age: %1$d years</string>
+</resources>

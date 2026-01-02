@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="drawerLayout" type="id"/>
+    <item name="tvHomeTitle" type="id"/>
+    <item name="tvHomeSubtitle" type="id"/>
+    <item name="drawerList" type="id"/>
+    <item name="tvNameValue" type="id"/>
+    <item name="tvAgeValue" type="id"/>
+    <item name="tvEmptyState" type="id"/>
+    <item name="btnDatePicker" type="id"/>
+    <item name="tvSelectedDate" type="id"/>
+    <item name="nav_products" type="id"/>
+    <item name="nav_fragments" type="id"/>
+    <item name="nav_data_send" type="id"/>
+    <item name="nav_user_info" type="id"/>
+    <item name="nav_drawer_demo" type="id"/>
+    <item name="nav_login" type="id"/>
+    <item name="nav_signup" type="id"/>
+    <item name="nav_sign_out" type="id"/>
+</resources>
+

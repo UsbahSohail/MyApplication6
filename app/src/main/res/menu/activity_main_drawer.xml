@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_home"
+            android:icon="@drawable/ic_menu_camera"
+            android:title="@string/menu_home" />
+        <item
+            android:id="@+id/nav_gallery"
+            android:icon="@drawable/ic_menu_gallery"
+            android:title="@string/menu_gallery" />
+        <item
+            android:id="@+id/nav_slideshow"
+            android:icon="@drawable/ic_menu_slideshow"
+            android:title="@string/menu_slideshow" />
+    </group>
+
+    <item android:title="@string/menu_section_screens">
+        <menu>
+            <item
+                android:id="@+id/nav_products"
+                android:icon="@drawable/ic_menu_gallery"
+                android:title="@string/menu_products" />
+            <item
+                android:id="@+id/nav_fragments"
+                android:icon="@drawable/ic_menu_slideshow"
+                android:title="@string/menu_fragments" />
+            <item
+                android:id="@+id/nav_data_send"
+                android:icon="@drawable/ic_menu_camera"
+                android:title="@string/menu_data_send" />
+            <item
+                android:id="@+id/nav_user_info"
+                android:icon="@drawable/ic_menu_camera"
+                android:title="@string/menu_user_info" />
+            <item
+                android:id="@+id/nav_drawer_demo"
+                android:icon="@drawable/ic_menu_slideshow"
+                android:title="@string/menu_drawer_demo" />
+            <item
+                android:id="@+id/nav_login"
+                android:icon="@drawable/ic_menu_camera"
+                android:title="@string/menu_login" />
+            <item
+                android:id="@+id/nav_signup"
+                android:icon="@drawable/ic_menu_gallery"
+                android:title="@string/menu_signup" />
+            <item
+                android:id="@+id/nav_sign_out"
+                android:icon="@drawable/ic_menu_camera"
+                android:title="@string/menu_sign_out" />
+        </menu>
+    </item>
+</menu>

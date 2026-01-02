@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Material colors -->
+    <color name="purple_200">#BB86FC</color>
+    <color name="purple_500">#6200EE</color>
+    <color name="purple_700">#3700B3</color>
+    <color name="teal_200">#03DAC5</color>
+    <color name="teal_700">#018786</color>
+
+    <!-- App-specific colors -->
+    <color name="amazon_orange">#FF9900</color>
+    <color name="amazon_navy_dark">#131921</color>
+    <color name="amazon_navy">#232F3E</color>
+    <color name="amazon_gold">#FFD814</color>
+    <color name="amazon_light_bg">#F3F3F3</color>
+    <color name="light_gray">#F0F0F0</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="gray_dark">#9E9E9E</color>
+    <color name="gray_light">#E0E0E0</color>
+</resources>

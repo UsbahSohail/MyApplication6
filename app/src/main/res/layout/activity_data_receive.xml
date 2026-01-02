@@ -1,0 +1,103 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/amazon_light_bg">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:background="@color/amazon_navy_dark"
+            android:gravity="center_vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Screen 7 · Data received"
+                android:textColor="@color/white"
+                android:textSize="22sp"
+                android:fontFamily="sans-serif-medium"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="24dp"
+            android:padding="24dp"
+            android:background="@android:color/white"
+            android:elevation="4dp"
+            android:gravity="center_horizontal">
+
+            <TextView
+                android:id="@+id/tvScreenDesc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="We captured the data you submitted on Screen 6."
+                android:textColor="@color/gray_dark"
+                android:textSize="14sp"
+                android:layout_marginBottom="24dp"/>
+
+            <TextView
+                android:id="@+id/tvNameValue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:textColor="@color/amazon_navy_dark"
+                android:fontFamily="sans-serif-medium"
+                android:padding="16dp"
+                android:background="@color/light_gray"
+                android:visibility="gone"/>
+
+            <TextView
+                android:id="@+id/tvAgeValue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="18sp"
+                android:textColor="@color/amazon_orange"
+                android:fontFamily="sans-serif-medium"
+                android:padding="16dp"
+                android:background="@android:color/white"
+                android:visibility="gone"/>
+
+            <TextView
+                android:id="@+id/tvEmptyState"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/data_receive_empty"
+                android:textColor="@color/gray_dark"
+                android:textSize="16sp"
+                android:padding="16dp"
+                android:fontFamily="sans-serif"
+                android:background="@color/light_gray"/>
+
+            <Button
+                android:id="@+id/btnBackToSender"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Send something else"
+                android:textColor="@color/black"
+                android:backgroundTint="@color/amazon_gold"
+                android:fontFamily="sans-serif-medium"
+                android:padding="12dp"
+                android:layout_marginTop="24dp"/>
+
+            <Button
+                android:id="@+id/btnBackToMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Back to product menu"
+                android:textColor="@color/amazon_orange"
+                android:backgroundTint="@android:color/transparent"
+                android:fontFamily="sans-serif-medium"
+                android:padding="12dp"
+                android:layout_marginTop="12dp"/>
+
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

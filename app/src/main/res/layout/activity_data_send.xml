@@ -1,0 +1,121 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/amazon_light_bg">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:background="@color/amazon_navy_dark"
+            android:gravity="center_vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Screen 6 · Share with Amazon"
+                android:textColor="@color/white"
+                android:textSize="22sp"
+                android:fontFamily="sans-serif-medium"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="24dp"
+            android:padding="24dp"
+            android:background="@android:color/white"
+            android:elevation="4dp"
+            android:gravity="center_horizontal">
+
+            <TextView
+                android:id="@+id/tvStepTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Send data to the next screen"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/amazon_navy_dark"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/tvStepDesc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Type any note you want to share. We will hand it off to Screen 7 so you can confirm it arrived."
+                android:textColor="@color/gray_dark"
+                android:textSize="14sp"
+                android:layout_marginBottom="24dp"/>
+
+            <EditText
+                android:id="@+id/etName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter full name"
+                android:padding="12dp"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/rounded_input_bg"
+                android:fontFamily="sans-serif-medium" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Birth Date:"
+                android:textColor="@color/amazon_navy_dark"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp"/>
+
+            <Button
+                android:id="@+id/btnDatePicker"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Select Birth Date"
+                android:textColor="@color/black"
+                android:backgroundTint="@color/light_gray"
+                android:fontFamily="sans-serif-medium"
+                android:padding="12dp"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/tvSelectedDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="No date selected"
+                android:padding="12dp"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/rounded_input_bg"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/gray_dark"
+                android:visibility="gone"/>
+
+            <Button
+                android:id="@+id/btnSend"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/amazon_gold"
+                android:fontFamily="sans-serif-medium"
+                android:padding="12dp"
+                android:text="Send to Screen 7"
+                android:textColor="@color/black" />
+
+            <Button
+                android:id="@+id/btnBackToMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Back to Product Menu"
+                android:textColor="@color/amazon_orange"
+                android:backgroundTint="@android:color/transparent"
+                android:fontFamily="sans-serif-medium"
+                android:padding="12dp"
+                android:layout_marginTop="16dp"/>
+
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>
