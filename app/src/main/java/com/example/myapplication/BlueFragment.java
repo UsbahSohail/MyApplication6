@@ -11,4 +11,5 @@ public class BlueFragment extends Fragment {
         v.setBackgroundColor(0xFF0000FF); // Blue background
         return v;
     }
-}
+} //usbah sohail
+
