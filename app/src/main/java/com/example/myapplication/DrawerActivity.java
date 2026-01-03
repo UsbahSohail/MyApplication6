@@ -5,6 +5,9 @@ import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
 public class DrawerActivity extends AppCompatActivity {
     private final String[] menu = {
             "Product Catalog",
@@ -42,6 +45,8 @@ public class DrawerActivity extends AppCompatActivity {
                     intent = new Intent(this, MainActivity.class);
                     break;
                 case 5:
+                    // Sign out from Firebase
+                    FirebaseAuth.getInstance().signOut();
                     Toast.makeText(this, "Signing out...", Toast.LENGTH_SHORT).show();
                     intent = new Intent(this, LoginActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -59,5 +64,18 @@ public class DrawerActivity extends AppCompatActivity {
 
             dl.closeDrawers();
         });
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Session handling - Check if user is authenticated
+        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser == null) {
+            // User is not authenticated, redirect to LoginActivity
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+        }
     }
 }

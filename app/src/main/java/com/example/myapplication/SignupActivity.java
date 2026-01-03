@@ -1,32 +1,41 @@
 package com.example.myapplication;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 
 public class SignupActivity extends AppCompatActivity {
 
-    public static final String PREF_NAME = "amazon_user_prefs";
-    public static final String KEY_NAME = "key_name";
-    public static final String KEY_EMAIL = "key_email";
-    public static final String KEY_PASSWORD = "key_password";
+    private FirebaseAuth mAuth;
+    private EditText etName;
+    private EditText etEmail;
+    private EditText etPassword;
+    private Button btnSignup;
+    private TextView tvLogin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signup);
 
-        EditText etName = findViewById(R.id.etUsername);
-        EditText etEmail = findViewById(R.id.etEmail);
-        EditText etPassword = findViewById(R.id.etPassword);
-        Button btnSignup = findViewById(R.id.btnSignup);
-        TextView tvLogin = findViewById(R.id.tvLoginLink);
+        // Initialize Firebase Auth
+        mAuth = FirebaseAuth.getInstance();
+
+        etName = findViewById(R.id.etUsername);
+        etEmail = findViewById(R.id.etEmail);
+        etPassword = findViewById(R.id.etPassword);
+        btnSignup = findViewById(R.id.btnSignup);
+        tvLogin = findViewById(R.id.tvLoginLink);
 
         btnSignup.setOnClickListener(v -> {
             String name = etName.getText().toString().trim();
@@ -39,7 +48,7 @@ public class SignupActivity extends AppCompatActivity {
                 return;
             }
             if (TextUtils.isEmpty(email)) {
-                etEmail.setError("Enter email or mobile");
+                etEmail.setError("Enter email");
                 etEmail.requestFocus();
                 return;
             }
@@ -49,16 +58,69 @@ public class SignupActivity extends AppCompatActivity {
                 return;
             }
 
-            SharedPreferences preferences = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
-            preferences.edit()
-                    .putString(KEY_NAME, name)
-                    .putString(KEY_EMAIL, email)
-                    .putString(KEY_PASSWORD, password)
-                    .apply();
+            // Validate password length (Firebase requires minimum 6 characters)
+            if (password.length() < 6) {
+                etPassword.setError("Password must be at least 6 characters");
+                etPassword.requestFocus();
+                return;
+            }
 
-            Toast.makeText(this, "Account created! Welcome, " + name, Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(this, ProductActivity.class));
-            finish();
+            // Validate email format
+            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                etEmail.setError("Enter a valid email address");
+                etEmail.requestFocus();
+                return;
+            }
+
+            // Create user with Firebase Authentication
+            btnSignup.setEnabled(false);
+            mAuth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(this, task -> {
+                        btnSignup.setEnabled(true);
+                        if (task.isSuccessful()) {
+                            // Sign up success, update user profile with name
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            if (user != null) {
+                                UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                        .setDisplayName(name)
+                                        .build();
+
+                                user.updateProfile(profileUpdates)
+                                        .addOnCompleteListener(updateTask -> {
+                                            if (updateTask.isSuccessful()) {
+                                                Toast.makeText(SignupActivity.this, 
+                                                    "Account created! Welcome, " + name, 
+                                                    Toast.LENGTH_SHORT).show();
+                                                startActivity(new Intent(SignupActivity.this, ProductActivity.class));
+                                                finish();
+                                            } else {
+                                                // Profile update failed, but account is created
+                                                Toast.makeText(SignupActivity.this, 
+                                                    "Account created! Welcome, " + name, 
+                                                    Toast.LENGTH_SHORT).show();
+                                                startActivity(new Intent(SignupActivity.this, ProductActivity.class));
+                                                finish();
+                                            }
+                                        });
+                            }
+                        } else {
+                            // Sign up failed
+                            String errorMessage = "Signup failed. Please try again.";
+                            if (task.getException() != null) {
+                                String exceptionMessage = task.getException().getMessage();
+                                if (exceptionMessage != null) {
+                                    if (exceptionMessage.contains("email address is already in use")) {
+                                        errorMessage = "This email is already registered. Please login.";
+                                    } else if (exceptionMessage.contains("invalid email")) {
+                                        errorMessage = "Invalid email address. Please check and try again.";
+                                    } else if (exceptionMessage.contains("weak password")) {
+                                        errorMessage = "Password is too weak. Please use a stronger password.";
+                                    }
+                                }
+                            }
+                            Toast.makeText(SignupActivity.this, errorMessage, Toast.LENGTH_LONG).show();
+                        }
+                    });
         });
 
         tvLogin.setOnClickListener(v -> {

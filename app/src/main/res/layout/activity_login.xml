@@ -85,11 +85,35 @@
                 android:layout_marginBottom="12dp" />
 
             <TextView
+                android:id="@+id/tvForgotPassword"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Forgot Password?"
+                android:textColor="@color/amazon_orange"
+                android:textSize="14sp"
+                android:layout_marginBottom="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="4dp" />
+
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="By continuing, you agree to Amazon's Conditions of Use and Privacy Notice."
                 android:textColor="@color/gray_dark"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:id="@+id/tvSignupLink"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Don't have an account? Sign Up"
+                android:textColor="@color/amazon_orange"
+                android:textSize="16sp"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="4dp" />
         </LinearLayout>
 
     </LinearLayout>

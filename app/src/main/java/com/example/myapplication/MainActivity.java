@@ -16,6 +16,8 @@ import androidx.navigation.ui.NavigationUI;
 import com.example.myapplication.databinding.ActivityMainBinding;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -64,6 +66,8 @@ public class MainActivity extends AppCompatActivity {
             } else if (id == R.id.nav_signup) {
                 startActivity(new Intent(this, SignupActivity.class));
             } else if (id == R.id.nav_sign_out) {
+                // Sign out from Firebase
+                FirebaseAuth.getInstance().signOut();
                 Intent signOutIntent = new Intent(this, LoginActivity.class);
                 signOutIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(signOutIntent);
@@ -123,6 +127,19 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Session handling - Check if user is authenticated
+        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser == null) {
+            // User is not authenticated, redirect to LoginActivity
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+        }
     }
 }
 

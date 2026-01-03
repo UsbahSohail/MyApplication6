@@ -8,6 +8,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,11 +38,26 @@ public class ProductActivity extends AppCompatActivity {
         btnDataSend.setOnClickListener(v -> startActivity(new Intent(this, DataSendActivity.class)));
         btnNavigationView.setOnClickListener(v -> startActivity(new Intent(this, MainActivity.class)));
         btnSignOut.setOnClickListener(v -> {
+            // Sign out from Firebase
+            FirebaseAuth.getInstance().signOut();
             Intent signOutIntent = new Intent(this, LoginActivity.class);
             signOutIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(signOutIntent);
             finishAffinity();
         });
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Session handling - Check if user is authenticated
+        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser == null) {
+            // User is not authenticated, redirect to LoginActivity
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+        }
     }
 
     private List<Product> buildProducts() {
