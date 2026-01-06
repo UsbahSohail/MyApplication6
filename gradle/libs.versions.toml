@@ -15,7 +15,7 @@ firebaseDatabase = "22.0.1"
 firebaseAuth = "22.3.1"
 zxingCore = "3.5.3"
 zxingAndroid = "4.3.0"
-geminiAi = "0.2.2"
+geminiAi = "0.7.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }

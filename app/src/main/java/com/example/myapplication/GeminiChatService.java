@@ -8,8 +8,11 @@ import android.util.Log;
 import com.google.ai.client.generativeai.GenerativeModel;
 import com.google.ai.client.generativeai.java.GenerativeModelFutures;
 import com.google.ai.client.generativeai.java.ChatFutures;
+import com.google.ai.client.generativeai.type.Content;
 import com.google.ai.client.generativeai.type.GenerateContentResponse;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -25,7 +28,9 @@ public class GeminiChatService {
     private static final String API_KEY_PLACEHOLDER = "AIzaSyBKzNu_MNDcWJRZeKsDsci-yM4ZSDxMsac";
     
     private GenerativeModel model;
+    private GenerativeModelFutures modelFutures;
     private ChatFutures chat;
+    private List<Content> conversationHistory;
     private final Executor executor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     
@@ -65,16 +70,18 @@ public class GeminiChatService {
                 API_KEY_PLACEHOLDER
             );
             
-            GenerativeModelFutures modelFutures = GenerativeModelFutures.from(model);
+            modelFutures = GenerativeModelFutures.from(model);
+            conversationHistory = new ArrayList<>();
+            
+            // Initialize chat with app context
+            Content.Builder systemBuilder = new Content.Builder();
+            systemBuilder.addText(APP_CONTEXT);
+            systemBuilder.setRole("user");
+            Content systemMessage = systemBuilder.build();
+            conversationHistory.add(systemMessage);
             
             // Start chat session
-            chat = modelFutures.startChat();
-            
-            // Send initial context as first message
-            if (chat != null) {
-                String initialPrompt = APP_CONTEXT + "\n\nPlease acknowledge that you understand your role as an AI assistant for this e-commerce app.";
-                chat.sendMessage(initialPrompt);
-            }
+            chat = modelFutures.startChat(conversationHistory);
             
             Log.d(TAG, "Gemini model initialized successfully");
         } catch (Exception e) {
@@ -98,13 +105,29 @@ public class GeminiChatService {
                 // Tokenize and process the message for better context understanding
                 String processedMessage = processMessage(message);
                 
-                // Send message to Gemini
-                GenerateContentResponse response = chat.sendMessage(processedMessage).get();
+                // Create user message Content
+                Content.Builder userBuilder = new Content.Builder();
+                userBuilder.addText(processedMessage);
+                userBuilder.setRole("user");
+                Content userMessage = userBuilder.build();
+                
+                // Add to conversation history
+                conversationHistory.add(userMessage);
+                
+                // Send message using chat API
+                GenerateContentResponse response = chat.sendMessage(userMessage).get();
                 
                 // Extract response text
                 String responseText = response != null ? response.getText() : null;
                 
                 if (responseText != null && !responseText.isEmpty()) {
+                    // Add AI response to conversation history
+                    Content.Builder aiBuilder = new Content.Builder();
+                    aiBuilder.addText(responseText);
+                    aiBuilder.setRole("model");
+                    Content aiResponse = aiBuilder.build();
+                    conversationHistory.add(aiResponse);
+                    
                     mainHandler.post(() -> callback.onResponse(responseText));
                 } else {
                     mainHandler.post(() -> callback.onError("No response from AI"));
@@ -175,7 +198,13 @@ public class GeminiChatService {
      * Reset the chat session
      */
     public void resetChat() {
-        initializeModel();
+        conversationHistory.clear();
+        Content.Builder systemBuilder = new Content.Builder();
+        systemBuilder.addText(APP_CONTEXT);
+        systemBuilder.setRole("user");
+        Content systemMessage = systemBuilder.build();
+        conversationHistory.add(systemMessage);
+        chat = modelFutures.startChat(conversationHistory);
     }
     
     /**
