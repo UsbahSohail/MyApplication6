@@ -151,6 +151,14 @@
                 android:text="Chat with Users" />
 
             <Button
+                android:id="@+id/btnAIChatbot"
+                style="@style/AmazonButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="AI Assistant" />
+
+            <Button
                 android:id="@+id/btnSignOut"
                 style="@style/AmazonButton"
                 android:layout_width="match_parent"

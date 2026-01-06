@@ -65,6 +65,8 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(this, LoginActivity.class));
             } else if (id == R.id.nav_signup) {
                 startActivity(new Intent(this, SignupActivity.class));
+            } else if (id == R.id.nav_ai_chatbot) {
+                startActivity(new Intent(this, AIChatbotActivity.class));
             } else if (id == R.id.nav_sign_out) {
                 // Sign out from Firebase
                 FirebaseAuth.getInstance().signOut();
@@ -112,6 +114,8 @@ public class MainActivity extends AppCompatActivity {
                 .setIcon(R.drawable.ic_menu_camera);
         subMenu.add(Menu.NONE, R.id.nav_signup, Menu.NONE, getString(R.string.menu_signup))
                 .setIcon(R.drawable.ic_menu_gallery);
+        subMenu.add(Menu.NONE, R.id.nav_ai_chatbot, Menu.NONE, getString(R.string.menu_ai_chatbot))
+                .setIcon(R.drawable.ic_menu_camera);
         subMenu.add(Menu.NONE, R.id.nav_sign_out, Menu.NONE, getString(R.string.menu_sign_out))
                 .setIcon(R.drawable.ic_menu_camera);
     }

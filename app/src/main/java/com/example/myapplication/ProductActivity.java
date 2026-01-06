@@ -32,6 +32,7 @@ public class ProductActivity extends AppCompatActivity {
         Button btnNavigationView = findViewById(R.id.btnNavigationView);
         Button btnQRScanner = findViewById(R.id.btnQRScanner);
         Button btnChat = findViewById(R.id.btnChat);
+        Button btnAIChatbot = findViewById(R.id.btnAIChatbot);
         Button btnSignOut = findViewById(R.id.btnSignOut);
 
         btnFragments.setOnClickListener(v -> startActivity(new Intent(this, FragmentsActivity.class)));
@@ -41,6 +42,7 @@ public class ProductActivity extends AppCompatActivity {
         btnNavigationView.setOnClickListener(v -> startActivity(new Intent(this, MainActivity.class)));
         btnQRScanner.setOnClickListener(v -> startActivity(new Intent(this, QRScannerActivity.class)));
         btnChat.setOnClickListener(v -> startActivity(new Intent(this, ChatListActivity.class)));
+        btnAIChatbot.setOnClickListener(v -> startActivity(new Intent(this, AIChatbotActivity.class)));
         btnSignOut.setOnClickListener(v -> {
             // Sign out from Firebase
             FirebaseAuth.getInstance().signOut();

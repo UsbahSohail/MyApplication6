@@ -15,6 +15,7 @@ firebaseDatabase = "22.0.1"
 firebaseAuth = "22.3.1"
 zxingCore = "3.5.3"
 zxingAndroid = "4.3.0"
+geminiAi = "0.2.2"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -31,6 +32,7 @@ firebase-database = { group = "com.google.firebase", name = "firebase-database",
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version.ref = "firebaseAuth" }
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxingCore" }
 zxing-android = { group = "com.journeyapps", name = "zxing-android-embedded", version.ref = "zxingAndroid" }
+gemini-ai = { group = "com.google.ai.client.generativeai", name = "generativeai", version.ref = "geminiAi" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
