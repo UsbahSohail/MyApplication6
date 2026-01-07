@@ -9,10 +9,6 @@ pluginManagement {
         }
         mavenCentral()
         gradlePluginPortal()
-        // Add alternative repositories
-        maven {
-            url = uri("https://repo1.maven.org/maven2/")
-        }
     }
 }
 dependencyResolutionManagement {
@@ -26,10 +22,6 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
-        // Add alternative Maven repository
-        maven {
-            url = uri("https://repo1.maven.org/maven2/")
-        }
     }
 }
 

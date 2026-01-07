@@ -18,6 +18,7 @@ import java.util.List;
 public class ProductActivity extends AppCompatActivity {
     private AdManager adManager;
     private LinearLayout bannerAdContainer;
+    private LinearLayout topBannerAdContainer;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,16 +27,26 @@ public class ProductActivity extends AppCompatActivity {
 
         // Initialize AdMob
         adManager = AdManager.getInstance();
-        adManager.initialize(this);
         
         RecyclerView recyclerView = findViewById(R.id.recyclerProducts);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         recyclerView.setNestedScrollingEnabled(false);
         recyclerView.setAdapter(new ProductAdapter(buildProducts()));
         
-        // Setup Banner Ad
+        // Setup Banner Ad Containers
         bannerAdContainer = findViewById(R.id.bannerAdContainer);
-        adManager.loadBannerAd(this, bannerAdContainer);
+        topBannerAdContainer = findViewById(R.id.topBannerAdContainer);
+        
+        // Initialize AdMob and load banner ads after initialization
+        adManager.initialize(this, () -> {
+            // Load banner ads after AdMob is initialized
+            if (topBannerAdContainer != null) {
+                adManager.loadBannerAd(ProductActivity.this, topBannerAdContainer);
+            }
+            if (bannerAdContainer != null) {
+                adManager.loadBannerAd(ProductActivity.this, bannerAdContainer);
+            }
+        });
 
         Button btnFragments = findViewById(R.id.btnFragments);
         Button btnDrawer = findViewById(R.id.btnDrawerDemo);
@@ -112,9 +123,14 @@ public class ProductActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Reload banner ad if needed
-        if (bannerAdContainer != null && adManager != null) {
-            adManager.loadBannerAd(this, bannerAdContainer);
+        // Reload banner ads if needed
+        if (adManager != null) {
+            if (topBannerAdContainer != null) {
+                adManager.loadBannerAd(this, topBannerAdContainer);
+            }
+            if (bannerAdContainer != null) {
+                adManager.loadBannerAd(this, bannerAdContainer);
+            }
         }
     }
     

@@ -13,6 +13,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class SignupActivity extends AppCompatActivity {
 
@@ -87,20 +89,14 @@ public class SignupActivity extends AppCompatActivity {
 
                                 user.updateProfile(profileUpdates)
                                         .addOnCompleteListener(updateTask -> {
-                                            if (updateTask.isSuccessful()) {
-                                                Toast.makeText(SignupActivity.this, 
-                                                    "Account created! Welcome, " + name, 
-                                                    Toast.LENGTH_SHORT).show();
-                                                startActivity(new Intent(SignupActivity.this, ProductActivity.class));
-                                                finish();
-                                            } else {
-                                                // Profile update failed, but account is created
-                                                Toast.makeText(SignupActivity.this, 
-                                                    "Account created! Welcome, " + name, 
-                                                    Toast.LENGTH_SHORT).show();
-                                                startActivity(new Intent(SignupActivity.this, ProductActivity.class));
-                                                finish();
-                                            }
+                                            // Save user to Firebase Realtime Database
+                                            saveUserToDatabase(user, name, email);
+                                            
+                                            Toast.makeText(SignupActivity.this, 
+                                                "Account created! Welcome, " + name, 
+                                                Toast.LENGTH_SHORT).show();
+                                            startActivity(new Intent(SignupActivity.this, ProductActivity.class));
+                                            finish();
                                         });
                             }
                         } else {
@@ -127,5 +123,40 @@ public class SignupActivity extends AppCompatActivity {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
         });
+    }
+    
+    /**
+     * Save user to Firebase Realtime Database
+     */
+    private void saveUserToDatabase(FirebaseUser firebaseUser, String name, String email) {
+        if (firebaseUser == null) {
+            android.util.Log.e("SignupActivity", "FirebaseUser is null, cannot save to database");
+            return;
+        }
+        
+        String userId = firebaseUser.getUid();
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference usersRef = database.getReference("users");
+        
+        // Create User object
+        User user = new User(userId, name, email);
+        
+        android.util.Log.d("SignupActivity", "Saving user to database - ID: " + userId + ", Name: " + name + ", Email: " + email);
+        
+        // Save to database
+        usersRef.child(userId).setValue(user)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        android.util.Log.d("SignupActivity", "User saved successfully to database: " + userId);
+                    } else {
+                        android.util.Log.e("SignupActivity", "Failed to save user to database", task.getException());
+                        if (task.getException() != null) {
+                            android.util.Log.e("SignupActivity", "Error details: " + task.getException().getMessage());
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("SignupActivity", "Error saving user to database", e);
+                });
     }
 }

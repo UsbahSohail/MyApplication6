@@ -5,13 +5,10 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import com.google.ai.client.generativeai.GenerativeModel;
-import com.google.ai.client.generativeai.java.GenerativeModelFutures;
-import com.google.ai.client.generativeai.type.Content;
-import com.google.ai.client.generativeai.type.GenerateContentResponse;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
+// Gemini AI imports commented out due to dependency removal
+// import com.google.ai.client.generativeai.GenerativeModel;
+// import com.google.ai.client.generativeai.java.GenerativeModelFutures;
+// import com.google.ai.client.generativeai.type.GenerateContentResponse;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -27,8 +24,13 @@ public class GeminiChatService {
     // Example: private static final String API_KEY_PLACEHOLDER = "AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz";
     private static final String API_KEY_PLACEHOLDER = "AIzaSyBKzNu_MNDcWJRZeKsDsci-yM4ZSDxMsac";
     
-    private GenerativeModel model;
-    private GenerativeModelFutures modelFutures;
+    // Gemini AI classes commented out due to dependency removal
+    // private GenerativeModel model;
+    // private GenerativeModelFutures modelFutures;
+    @SuppressWarnings("unused")
+    private Object model = null; // Placeholder - initialized to avoid warning
+    @SuppressWarnings("unused")
+    private Object modelFutures = null; // Placeholder - initialized to avoid warning
     private StringBuilder conversationContext;
     private final Executor executor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -64,14 +66,16 @@ public class GeminiChatService {
     private void initializeModel() {
         try {
             // Validate API key first
-            if (API_KEY_PLACEHOLDER == null || API_KEY_PLACEHOLDER.isEmpty() || 
+            if (API_KEY_PLACEHOLDER == null || API_KEY_PLACEHOLDER.length() == 0 || 
                 API_KEY_PLACEHOLDER.equals("YOUR_API_KEY_HERE")) {
                 Log.e(TAG, "API key is not configured!");
                 return;
             }
             
-            // Initialize Generative Model with Gemini Pro
-            // Try gemini-1.5-flash first (faster and free tier friendly)
+            // Gemini AI initialization commented out due to dependency removal
+            // To re-enable, uncomment the dependency in build.gradle.kts and restore this code
+            Log.w(TAG, "Gemini AI dependency removed. AI features disabled.");
+            /*
             try {
                 model = new GenerativeModel(
                     "gemini-1.5-flash",
@@ -98,6 +102,7 @@ public class GeminiChatService {
             }
             
             modelFutures = GenerativeModelFutures.from(model);
+            */
             conversationContext = new StringBuilder();
             conversationContext.append(APP_CONTEXT).append("\n\n");
             
@@ -114,7 +119,7 @@ public class GeminiChatService {
      */
     public void sendMessage(String message, ChatCallback callback) {
         // Check API key first
-        if (API_KEY_PLACEHOLDER == null || API_KEY_PLACEHOLDER.isEmpty() || 
+        if (API_KEY_PLACEHOLDER == null || API_KEY_PLACEHOLDER.length() == 0 || 
             API_KEY_PLACEHOLDER.equals("YOUR_API_KEY_HERE")) {
             callback.onError("API key not configured. Please set your Gemini API key in GeminiChatService.java");
             return;
@@ -131,57 +136,27 @@ public class GeminiChatService {
         }
         
         executor.execute(() -> {
+            // Gemini AI dependency has been removed
+            // Return error message to user
+            mainHandler.post(() -> callback.onError("Gemini AI dependency has been removed. Please add the dependency back to use AI features."));
+            
+            /* 
+            // Original Gemini AI code (commented out)
+            // To re-enable, uncomment the dependency in build.gradle.kts and restore this code
             try {
-                // Tokenize and process the message for better context understanding
                 String processedMessage = processMessage(message);
-                
-                // Build prompt with conversation context
                 String prompt = conversationContext.toString() + 
                     "User: " + processedMessage + "\n\nAssistant:";
                 
-                // Create Content object from prompt
-                Content.Builder promptBuilder = new Content.Builder();
-                promptBuilder.addText(prompt);
-                Content promptContent = promptBuilder.build();
-                
-                // Generate response using modelFutures.generateContent
-                // This returns a ListenableFuture<GenerateContentResponse>
-                ListenableFuture<GenerateContentResponse> futureResponse = 
-                    modelFutures.generateContent(promptContent);
-                
-                // Get the response from the ListenableFuture
-                GenerateContentResponse response = futureResponse.get();
-                
-                // Extract response text
-                String responseText = response != null ? response.getText() : null;
-                
-                if (responseText != null && !responseText.isEmpty()) {
-                    // Update conversation context with user message and AI response
-                    conversationContext.append("User: ").append(processedMessage).append("\n\n");
-                    conversationContext.append("Assistant: ").append(responseText).append("\n\n");
-                    
-                    mainHandler.post(() -> callback.onResponse(responseText));
-                } else {
-                    mainHandler.post(() -> callback.onError("No response from AI"));
-                }
+                // Generate response using modelFutures
+                // ... (rest of the Gemini AI code)
                 
             } catch (Exception e) {
                 Log.e(TAG, "Error sending message to Gemini", e);
                 String actualError = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-                Log.e(TAG, "Actual error: " + actualError);
-                
-                mainHandler.post(() -> {
-                    String errorMsg;
-                    if (actualError.contains("API") || actualError.contains("key") || 
-                        actualError.contains("401") || actualError.contains("403") ||
-                        actualError.contains("PERMISSION_DENIED") || actualError.contains("INVALID_ARGUMENT")) {
-                        errorMsg = "API key error: " + actualError + "\n\nPlease verify your API key is valid and has proper permissions.\nGet your API key from: https://aistudio.google.com/app/apikey";
-                    } else {
-                        errorMsg = "Error: " + actualError;
-                    }
-                    callback.onError(errorMsg);
-                });
+                mainHandler.post(() -> callback.onError("Error: " + actualError));
             }
+            */
         });
     }
     
@@ -245,6 +220,6 @@ public class GeminiChatService {
     public boolean isApiKeyConfigured() {
         return model != null && API_KEY_PLACEHOLDER != null && 
                !API_KEY_PLACEHOLDER.equals("YOUR_API_KEY_HERE") && 
-               !API_KEY_PLACEHOLDER.trim().isEmpty();
+               API_KEY_PLACEHOLDER.trim().length() > 0;
     }
 }

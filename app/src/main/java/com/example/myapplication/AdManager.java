@@ -21,12 +21,12 @@ import com.google.android.gms.ads.initialization.OnInitializationCompleteListene
 public class AdManager {
     private static final String TAG = "AdManager";
     
-    // Ad Unit IDs from AdMob Console
-    // Banner Ad Unit ID
-    private static final String BANNER_AD_UNIT_ID = "ca-app-pub-3026089918070319/7707012239";
+    // Official Google AdMob Test IDs (for testing only)
+    // Banner Ad Unit ID (Test)
+    private static final String BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111";
     
-    // Interstitial Ad Unit ID
-    private static final String INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3026089918070319/8661518175";
+    // Interstitial Ad Unit ID (Test)
+    private static final String INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712";
     
     private static AdManager instance;
     private InterstitialAd interstitialAd;
@@ -83,19 +83,65 @@ public class AdManager {
      * @param adContainer The LinearLayout container where the ad will be displayed
      */
     public void loadBannerAd(Activity activity, LinearLayout adContainer) {
-        if (!isInitialized) {
-            Log.w(TAG, "AdMob not initialized. Call initialize() first.");
+        if (adContainer == null) {
+            Log.e(TAG, "Ad container is null");
             return;
         }
+        
+        if (!isInitialized) {
+            Log.w(TAG, "AdMob not initialized. Initializing now...");
+            initialize(activity, () -> {
+                // Retry loading ad after initialization
+                loadBannerAd(activity, adContainer);
+            });
+            return;
+        }
+        
+        // Make container visible immediately (will show loading state)
+        adContainer.setVisibility(View.VISIBLE);
+        
+        // Remove any existing views
+        adContainer.removeAllViews();
         
         AdView adView = new AdView(activity);
         adView.setAdUnitId(BANNER_AD_UNIT_ID);
         adView.setAdSize(com.google.android.gms.ads.AdSize.BANNER);
         
+        // Set up ad listener to handle ad loading events
+        adView.setAdListener(new com.google.android.gms.ads.AdListener() {
+            @Override
+            public void onAdLoaded() {
+                Log.d(TAG, "Banner ad loaded successfully");
+                adContainer.setVisibility(View.VISIBLE);
+                // Scroll to ad if needed (optional)
+                activity.runOnUiThread(() -> {
+                    // Ad is now visible and loaded
+                });
+            }
+            
+            @Override
+            public void onAdFailedToLoad(LoadAdError loadAdError) {
+                Log.e(TAG, "Banner ad failed to load: " + loadAdError.getMessage());
+                Log.e(TAG, "Error code: " + loadAdError.getCode());
+                Log.e(TAG, "Error domain: " + loadAdError.getDomain());
+                // Keep container visible but empty (or hide it)
+                // For testing, you might want to keep it visible to see the container
+                // adContainer.setVisibility(View.GONE);
+            }
+            
+            @Override
+            public void onAdOpened() {
+                Log.d(TAG, "Banner ad opened");
+            }
+            
+            @Override
+            public void onAdClosed() {
+                Log.d(TAG, "Banner ad closed");
+            }
+        });
+        
         // Add adView to container
-        adContainer.removeAllViews();
         adContainer.addView(adView);
-        adContainer.setVisibility(View.VISIBLE);
         
         // Create ad request
         AdRequest adRequest = new AdRequest.Builder().build();
