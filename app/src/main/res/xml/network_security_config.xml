@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Allow HTTPS connections to Google AI/Gemini API -->
+    <base-config cleartextTrafficAllowed="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    
+    <!-- Allow connections to Google AI domains -->
+    <domain-config cleartextTrafficAllowed="false">
+        <domain includeSubdomains="true">generativelanguage.googleapis.com</domain>
+        <domain includeSubdomains="true">ai.google.dev</domain>
+        <domain includeSubdomains="true">aistudio.google.com</domain>
+    </domain-config>
+</network-security-config>
+

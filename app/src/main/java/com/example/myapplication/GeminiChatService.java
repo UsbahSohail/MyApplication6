@@ -64,11 +64,39 @@ public class GeminiChatService {
     
     private void initializeModel() {
         try {
+            // Validate API key first
+            if (API_KEY_PLACEHOLDER == null || API_KEY_PLACEHOLDER.isEmpty() || 
+                API_KEY_PLACEHOLDER.equals("YOUR_API_KEY_HERE")) {
+                Log.e(TAG, "API key is not configured!");
+                return;
+            }
+            
             // Initialize Generative Model with Gemini Pro
-            model = new GenerativeModel(
-                "gemini-pro",
-                API_KEY_PLACEHOLDER
-            );
+            // Try gemini-1.5-flash first (faster and free tier friendly)
+            try {
+                model = new GenerativeModel(
+                    "gemini-1.5-flash",
+                    API_KEY_PLACEHOLDER
+                );
+                Log.d(TAG, "Using gemini-1.5-flash model");
+            } catch (Exception e) {
+                Log.d(TAG, "gemini-1.5-flash failed, trying gemini-pro");
+                try {
+                    model = new GenerativeModel(
+                        "gemini-pro",
+                        API_KEY_PLACEHOLDER
+                    );
+                    Log.d(TAG, "Using gemini-pro model");
+                } catch (Exception e2) {
+                    Log.e(TAG, "Failed to initialize model with both attempts", e2);
+                    return;
+                }
+            }
+            
+            if (model == null) {
+                Log.e(TAG, "Model is null after initialization");
+                return;
+            }
             
             modelFutures = GenerativeModelFutures.from(model);
             conversationHistory = new ArrayList<>();
@@ -85,7 +113,7 @@ public class GeminiChatService {
             
             Log.d(TAG, "Gemini model initialized successfully");
         } catch (Exception e) {
-            Log.e(TAG, "Error initializing Gemini model", e);
+            Log.e(TAG, "Error initializing Gemini model: " + e.getMessage(), e);
         }
     }
     
@@ -95,9 +123,21 @@ public class GeminiChatService {
      * @param callback Callback for response or error
      */
     public void sendMessage(String message, ChatCallback callback) {
-        if (model == null || chat == null) {
-            callback.onError("AI service not initialized. Please check API key configuration.");
+        // Check API key first
+        if (API_KEY_PLACEHOLDER == null || API_KEY_PLACEHOLDER.isEmpty() || 
+            API_KEY_PLACEHOLDER.equals("YOUR_API_KEY_HERE")) {
+            callback.onError("API key not configured. Please set your Gemini API key in GeminiChatService.java");
             return;
+        }
+        
+        if (model == null || chat == null) {
+            // Try to reinitialize if not initialized
+            Log.d(TAG, "Model or chat is null, attempting to reinitialize...");
+            initializeModel();
+            if (model == null || chat == null) {
+                callback.onError("AI service not initialized. Please check API key configuration and internet connection.");
+                return;
+            }
         }
         
         executor.execute(() -> {
@@ -135,12 +175,17 @@ public class GeminiChatService {
                 
             } catch (Exception e) {
                 Log.e(TAG, "Error sending message to Gemini", e);
+                String actualError = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                Log.e(TAG, "Actual error: " + actualError);
+                
                 mainHandler.post(() -> {
-                    String errorMsg = "Error: " + (e.getMessage() != null ? e.getMessage() : "Unknown error");
-                    if (errorMsg.contains("API") || errorMsg.contains("key") || 
-                        errorMsg.contains("401") || errorMsg.contains("403")) {
-                        errorMsg = "API key not configured or invalid. Please set your Gemini API key in GeminiChatService.java. " +
-                                   "Get your API key from: https://makersuite.google.com/app/apikey";
+                    String errorMsg;
+                    if (actualError.contains("API") || actualError.contains("key") || 
+                        actualError.contains("401") || actualError.contains("403") ||
+                        actualError.contains("PERMISSION_DENIED") || actualError.contains("INVALID_ARGUMENT")) {
+                        errorMsg = "API key error: " + actualError + "\n\nPlease verify your API key is valid and has proper permissions.\nGet your API key from: https://aistudio.google.com/app/apikey";
+                    } else {
+                        errorMsg = "Error: " + actualError;
                     }
                     callback.onError(errorMsg);
                 });

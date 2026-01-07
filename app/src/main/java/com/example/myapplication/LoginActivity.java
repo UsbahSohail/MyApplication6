@@ -177,12 +177,8 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        // Check if user is already signed in
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser != null) {
-            // User is already signed in, redirect to ProductActivity
-            startActivity(new Intent(this, ProductActivity.class));
-            finish();
-        }
+        // Don't auto-redirect - always show login screen
+        // User must login even if previously logged in
+        // This ensures: Splash → Login → (after login) → Home
     }
 }
