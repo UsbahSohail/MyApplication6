@@ -16,6 +16,8 @@ firebaseAuth = "22.3.1"
 zxingCore = "3.5.3"
 zxingAndroid = "4.3.0"
 geminiAi = "0.7.0"
+playServicesAds = "23.0.0"
+guava = "33.3.1-android"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -33,6 +35,8 @@ firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxingCore" }
 zxing-android = { group = "com.journeyapps", name = "zxing-android-embedded", version.ref = "zxingAndroid" }
 gemini-ai = { group = "com.google.ai.client.generativeai", name = "generativeai", version.ref = "geminiAi" }
+play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAds" }
+guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

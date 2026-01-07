@@ -7,12 +7,12 @@ import android.util.Log;
 
 import com.google.ai.client.generativeai.GenerativeModel;
 import com.google.ai.client.generativeai.java.GenerativeModelFutures;
-import com.google.ai.client.generativeai.java.ChatFutures;
 import com.google.ai.client.generativeai.type.Content;
 import com.google.ai.client.generativeai.type.GenerateContentResponse;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -29,8 +29,7 @@ public class GeminiChatService {
     
     private GenerativeModel model;
     private GenerativeModelFutures modelFutures;
-    private ChatFutures chat;
-    private List<Content> conversationHistory;
+    private StringBuilder conversationContext;
     private final Executor executor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     
@@ -99,17 +98,8 @@ public class GeminiChatService {
             }
             
             modelFutures = GenerativeModelFutures.from(model);
-            conversationHistory = new ArrayList<>();
-            
-            // Initialize chat with app context
-            Content.Builder systemBuilder = new Content.Builder();
-            systemBuilder.addText(APP_CONTEXT);
-            systemBuilder.setRole("user");
-            Content systemMessage = systemBuilder.build();
-            conversationHistory.add(systemMessage);
-            
-            // Start chat session
-            chat = modelFutures.startChat(conversationHistory);
+            conversationContext = new StringBuilder();
+            conversationContext.append(APP_CONTEXT).append("\n\n");
             
             Log.d(TAG, "Gemini model initialized successfully");
         } catch (Exception e) {
@@ -130,11 +120,11 @@ public class GeminiChatService {
             return;
         }
         
-        if (model == null || chat == null) {
+        if (model == null || modelFutures == null) {
             // Try to reinitialize if not initialized
-            Log.d(TAG, "Model or chat is null, attempting to reinitialize...");
+            Log.d(TAG, "Model is null, attempting to reinitialize...");
             initializeModel();
-            if (model == null || chat == null) {
+            if (model == null || modelFutures == null) {
                 callback.onError("AI service not initialized. Please check API key configuration and internet connection.");
                 return;
             }
@@ -145,28 +135,30 @@ public class GeminiChatService {
                 // Tokenize and process the message for better context understanding
                 String processedMessage = processMessage(message);
                 
-                // Create user message Content
-                Content.Builder userBuilder = new Content.Builder();
-                userBuilder.addText(processedMessage);
-                userBuilder.setRole("user");
-                Content userMessage = userBuilder.build();
+                // Build prompt with conversation context
+                String prompt = conversationContext.toString() + 
+                    "User: " + processedMessage + "\n\nAssistant:";
                 
-                // Add to conversation history
-                conversationHistory.add(userMessage);
+                // Create Content object from prompt
+                Content.Builder promptBuilder = new Content.Builder();
+                promptBuilder.addText(prompt);
+                Content promptContent = promptBuilder.build();
                 
-                // Send message using chat API
-                GenerateContentResponse response = chat.sendMessage(userMessage).get();
+                // Generate response using modelFutures.generateContent
+                // This returns a ListenableFuture<GenerateContentResponse>
+                ListenableFuture<GenerateContentResponse> futureResponse = 
+                    modelFutures.generateContent(promptContent);
+                
+                // Get the response from the ListenableFuture
+                GenerateContentResponse response = futureResponse.get();
                 
                 // Extract response text
                 String responseText = response != null ? response.getText() : null;
                 
                 if (responseText != null && !responseText.isEmpty()) {
-                    // Add AI response to conversation history
-                    Content.Builder aiBuilder = new Content.Builder();
-                    aiBuilder.addText(responseText);
-                    aiBuilder.setRole("model");
-                    Content aiResponse = aiBuilder.build();
-                    conversationHistory.add(aiResponse);
+                    // Update conversation context with user message and AI response
+                    conversationContext.append("User: ").append(processedMessage).append("\n\n");
+                    conversationContext.append("Assistant: ").append(responseText).append("\n\n");
                     
                     mainHandler.post(() -> callback.onResponse(responseText));
                 } else {
@@ -243,13 +235,8 @@ public class GeminiChatService {
      * Reset the chat session
      */
     public void resetChat() {
-        conversationHistory.clear();
-        Content.Builder systemBuilder = new Content.Builder();
-        systemBuilder.addText(APP_CONTEXT);
-        systemBuilder.setRole("user");
-        Content systemMessage = systemBuilder.build();
-        conversationHistory.add(systemMessage);
-        chat = modelFutures.startChat(conversationHistory);
+        conversationContext.setLength(0);
+        conversationContext.append(APP_CONTEXT).append("\n\n");
     }
     
     /**

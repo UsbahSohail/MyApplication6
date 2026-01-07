@@ -3,6 +3,7 @@ package com.example.myapplication;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -15,15 +16,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProductActivity extends AppCompatActivity {
+    private AdManager adManager;
+    private LinearLayout bannerAdContainer;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_product);
 
+        // Initialize AdMob
+        adManager = AdManager.getInstance();
+        adManager.initialize(this);
+        
         RecyclerView recyclerView = findViewById(R.id.recyclerProducts);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         recyclerView.setNestedScrollingEnabled(false);
         recyclerView.setAdapter(new ProductAdapter(buildProducts()));
+        
+        // Setup Banner Ad
+        bannerAdContainer = findViewById(R.id.bannerAdContainer);
+        adManager.loadBannerAd(this, bannerAdContainer);
 
         Button btnFragments = findViewById(R.id.btnFragments);
         Button btnDrawer = findViewById(R.id.btnDrawerDemo);
@@ -35,14 +47,30 @@ public class ProductActivity extends AppCompatActivity {
         Button btnAIChatbot = findViewById(R.id.btnAIChatbot);
         Button btnSignOut = findViewById(R.id.btnSignOut);
 
-        btnFragments.setOnClickListener(v -> startActivity(new Intent(this, FragmentsActivity.class)));
-        btnDrawer.setOnClickListener(v -> startActivity(new Intent(this, DrawerActivity.class)));
-        btnUserInfo.setOnClickListener(v -> startActivity(new Intent(this, UserInfoActivity.class)));
-        btnDataSend.setOnClickListener(v -> startActivity(new Intent(this, DataSendActivity.class)));
-        btnNavigationView.setOnClickListener(v -> startActivity(new Intent(this, MainActivity.class)));
-        btnQRScanner.setOnClickListener(v -> startActivity(new Intent(this, QRScannerActivity.class)));
-        btnChat.setOnClickListener(v -> startActivity(new Intent(this, ChatListActivity.class)));
-        btnAIChatbot.setOnClickListener(v -> startActivity(new Intent(this, AIChatbotActivity.class)));
+        btnFragments.setOnClickListener(v -> {
+            showInterstitialAdThenNavigate(FragmentsActivity.class);
+        });
+        btnDrawer.setOnClickListener(v -> {
+            showInterstitialAdThenNavigate(DrawerActivity.class);
+        });
+        btnUserInfo.setOnClickListener(v -> {
+            showInterstitialAdThenNavigate(UserInfoActivity.class);
+        });
+        btnDataSend.setOnClickListener(v -> {
+            showInterstitialAdThenNavigate(DataSendActivity.class);
+        });
+        btnNavigationView.setOnClickListener(v -> {
+            showInterstitialAdThenNavigate(MainActivity.class);
+        });
+        btnQRScanner.setOnClickListener(v -> {
+            showInterstitialAdThenNavigate(QRScannerActivity.class);
+        });
+        btnChat.setOnClickListener(v -> {
+            showInterstitialAdThenNavigate(ChatListActivity.class);
+        });
+        btnAIChatbot.setOnClickListener(v -> {
+            showInterstitialAdThenNavigate(AIChatbotActivity.class);
+        });
         btnSignOut.setOnClickListener(v -> {
             // Sign out from Firebase
             FirebaseAuth.getInstance().signOut();
@@ -64,6 +92,36 @@ public class ProductActivity extends AppCompatActivity {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
         }
+    }
+
+    /**
+     * Show interstitial ad before navigating to another activity
+     */
+    private void showInterstitialAdThenNavigate(Class<?> targetActivity) {
+        if (adManager != null) {
+            adManager.showInterstitialAd(this, () -> {
+                // Navigate after ad is closed
+                startActivity(new Intent(ProductActivity.this, targetActivity));
+            });
+        } else {
+            // AdManager not initialized, navigate immediately
+            startActivity(new Intent(this, targetActivity));
+        }
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Reload banner ad if needed
+        if (bannerAdContainer != null && adManager != null) {
+            adManager.loadBannerAd(this, bannerAdContainer);
+        }
+    }
+    
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Clean up if needed
     }
 
     private List<Product> buildProducts() {

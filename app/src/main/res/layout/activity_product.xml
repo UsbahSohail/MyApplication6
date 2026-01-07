@@ -165,6 +165,17 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:text="@string/menu_sign_out" />
+            
+            <!-- Banner Ad Container -->
+            <LinearLayout
+                android:id="@+id/bannerAdContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="8dp"
+                android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

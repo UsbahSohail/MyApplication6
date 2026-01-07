@@ -49,6 +49,8 @@ dependencies {
     implementation(libs.zxing.core)
     implementation(libs.zxing.android)
     implementation(libs.gemini.ai)
+    implementation(libs.play.services.ads)
+    implementation(libs.guava)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
