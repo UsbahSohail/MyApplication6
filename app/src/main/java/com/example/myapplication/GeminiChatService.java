@@ -5,10 +5,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-// Gemini AI imports commented out due to dependency removal
-// import com.google.ai.client.generativeai.GenerativeModel;
-// import com.google.ai.client.generativeai.java.GenerativeModelFutures;
-// import com.google.ai.client.generativeai.type.GenerateContentResponse;
+import com.google.ai.client.generativeai.GenerativeModel;
+import com.google.ai.client.generativeai.java.GenerativeModelFutures;
+import com.google.ai.client.generativeai.type.GenerateContentResponse;
+import com.google.ai.client.generativeai.type.Content;
+import com.google.ai.client.generativeai.type.TextPart;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -24,13 +25,8 @@ public class GeminiChatService {
     // Example: private static final String API_KEY_PLACEHOLDER = "AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz";
     private static final String API_KEY_PLACEHOLDER = "AIzaSyBKzNu_MNDcWJRZeKsDsci-yM4ZSDxMsac";
     
-    // Gemini AI classes commented out due to dependency removal
-    // private GenerativeModel model;
-    // private GenerativeModelFutures modelFutures;
-    @SuppressWarnings("unused")
-    private Object model = null; // Placeholder - initialized to avoid warning
-    @SuppressWarnings("unused")
-    private Object modelFutures = null; // Placeholder - initialized to avoid warning
+    private GenerativeModel model;
+    private GenerativeModelFutures modelFutures;
     private StringBuilder conversationContext;
     private final Executor executor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -60,6 +56,7 @@ public class GeminiChatService {
     }
     
     public GeminiChatService(Context context) {
+        // Context parameter kept for future use
         initializeModel();
     }
     
@@ -72,10 +69,7 @@ public class GeminiChatService {
                 return;
             }
             
-            // Gemini AI initialization commented out due to dependency removal
-            // To re-enable, uncomment the dependency in build.gradle.kts and restore this code
-            Log.w(TAG, "Gemini AI dependency removed. AI features disabled.");
-            /*
+            // Initialize Gemini AI model
             try {
                 model = new GenerativeModel(
                     "gemini-1.5-flash",
@@ -83,7 +77,7 @@ public class GeminiChatService {
                 );
                 Log.d(TAG, "Using gemini-1.5-flash model");
             } catch (Exception e) {
-                Log.d(TAG, "gemini-1.5-flash failed, trying gemini-pro");
+                Log.w(TAG, "gemini-1.5-flash failed, trying gemini-pro. Error: " + e.getMessage());
                 try {
                     model = new GenerativeModel(
                         "gemini-pro",
@@ -92,6 +86,11 @@ public class GeminiChatService {
                     Log.d(TAG, "Using gemini-pro model");
                 } catch (Exception e2) {
                     Log.e(TAG, "Failed to initialize model with both attempts", e2);
+                    String errorMsg = e2.getMessage();
+                    if (errorMsg != null && (errorMsg.contains("API key") || errorMsg.contains("invalid") || 
+                        errorMsg.contains("INVALID_ARGUMENT") || errorMsg.contains("PERMISSION_DENIED"))) {
+                        Log.e(TAG, "Invalid API key or permission denied. Please check your API key at https://aistudio.google.com/app/apikey");
+                    }
                     return;
                 }
             }
@@ -102,7 +101,6 @@ public class GeminiChatService {
             }
             
             modelFutures = GenerativeModelFutures.from(model);
-            */
             conversationContext = new StringBuilder();
             conversationContext.append(APP_CONTEXT).append("\n\n");
             
@@ -118,6 +116,9 @@ public class GeminiChatService {
      * @param callback Callback for response or error
      */
     public void sendMessage(String message, ChatCallback callback) {
+        // Fix: Make message final for lambda usage
+        final String userMessage = message;
+        
         // Check API key first
         if (API_KEY_PLACEHOLDER == null || API_KEY_PLACEHOLDER.length() == 0 || 
             API_KEY_PLACEHOLDER.equals("YOUR_API_KEY_HERE")) {
@@ -135,28 +136,70 @@ public class GeminiChatService {
             }
         }
         
+        // Fix: Make modelFutures and conversationContext final for lambda
+        final GenerativeModelFutures finalModelFutures = modelFutures;
+        final StringBuilder finalConversationContext = conversationContext;
+        
         executor.execute(() -> {
-            // Gemini AI dependency has been removed
-            // Return error message to user
-            mainHandler.post(() -> callback.onError("Gemini AI dependency has been removed. Please add the dependency back to use AI features."));
-            
-            /* 
-            // Original Gemini AI code (commented out)
-            // To re-enable, uncomment the dependency in build.gradle.kts and restore this code
             try {
-                String processedMessage = processMessage(message);
-                String prompt = conversationContext.toString() + 
+                String processedMessage = processMessage(userMessage);
+                String prompt = finalConversationContext.toString() + 
                     "User: " + processedMessage + "\n\nAssistant:";
                 
-                // Generate response using modelFutures
-                // ... (rest of the Gemini AI code)
+                // Fix: Use Content.Builder() with TextPart - the correct method for older Java SDK
+                // This SDK version requires: Content.Builder().addPart(new TextPart(prompt)).build()
+                Content content = new Content.Builder()
+                    .addPart(new TextPart(prompt))
+                    .build();
+                
+                // Generate response using Gemini AI
+                GenerateContentResponse response = finalModelFutures.generateContent(content).get();
+                
+                // Extract the text response from the generated content
+                String responseText = null;
+                if (response != null && response.getText() != null) {
+                    responseText = response.getText();
+                }
+                
+                if (responseText != null && !responseText.isEmpty()) {
+                    // Update conversation context
+                    finalConversationContext.append("User: ").append(processedMessage).append("\n\n");
+                    finalConversationContext.append("Assistant: ").append(responseText).append("\n\n");
+                    
+                    // Fix: Make responseText final for lambda
+                    final String finalResponseText = responseText;
+                    
+                    // Return response on main thread
+                    mainHandler.post(() -> callback.onResponse(finalResponseText));
+                } else {
+                    mainHandler.post(() -> callback.onError("No response received from AI. Please try again."));
+                }
                 
             } catch (Exception e) {
                 Log.e(TAG, "Error sending message to Gemini", e);
                 String actualError = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-                mainHandler.post(() -> callback.onError("Error: " + actualError));
+                
+                // Provide user-friendly error messages
+                String userErrorMessage;
+                if (actualError != null) {
+                    if (actualError.contains("API key") || actualError.contains("invalid") || 
+                        actualError.contains("INVALID_ARGUMENT") || actualError.contains("PERMISSION_DENIED")) {
+                        userErrorMessage = "Invalid API key. Please check your Gemini API key in GeminiChatService.java";
+                    } else if (actualError.contains("network") || actualError.contains("timeout")) {
+                        userErrorMessage = "Network error. Please check your internet connection and try again.";
+                    } else if (actualError.contains("quota") || actualError.contains("QUOTA_EXCEEDED")) {
+                        userErrorMessage = "API quota exceeded. Please check your Gemini API quota.";
+                    } else {
+                        userErrorMessage = "Error: " + actualError;
+                    }
+                } else {
+                    userErrorMessage = "Error communicating with AI service.";
+                }
+                
+                // Fix: Make error message final for lambda
+                final String finalErrorMessage = userErrorMessage;
+                mainHandler.post(() -> callback.onError(finalErrorMessage));
             }
-            */
         });
     }
     

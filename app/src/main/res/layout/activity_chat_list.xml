@@ -21,6 +21,17 @@
         android:padding="16dp"
         android:fontFamily="sans-serif-medium" />
 
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Loading users..."
+        android:textSize="14sp"
+        android:textColor="@color/gray_dark"
+        android:padding="12dp"
+        android:gravity="center"
+        android:visibility="visible" />
+
     <ListView
         android:id="@+id/listViewUsers"
         android:layout_width="match_parent"

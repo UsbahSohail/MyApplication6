@@ -49,8 +49,8 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.zxing.core)
     implementation(libs.zxing.android)
-    // Gemini AI dependency removed due to metadata error
-    // If needed later, add: implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
+    // Gemini AI dependency for AI chatbot feature
+    implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
     implementation(libs.play.services.ads)
     implementation(libs.guava)
     testImplementation(libs.junit)

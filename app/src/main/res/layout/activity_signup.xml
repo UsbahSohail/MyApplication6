@@ -59,6 +59,8 @@
                 android:hint="Your name"
                 android:padding="12dp"
                 android:background="@drawable/rounded_input_bg"
+                android:textColor="@color/black"
+                android:textColorHint="@color/gray_dark"
                 android:layout_marginBottom="16dp"/>
 
             <EditText
@@ -69,6 +71,8 @@
                 android:inputType="textEmailAddress"
                 android:padding="12dp"
                 android:background="@drawable/rounded_input_bg"
+                android:textColor="@color/black"
+                android:textColorHint="@color/gray_dark"
                 android:layout_marginBottom="16dp"/>
 
             <EditText
@@ -79,6 +83,8 @@
                 android:inputType="textPassword"
                 android:padding="12dp"
                 android:background="@drawable/rounded_input_bg"
+                android:textColor="@color/black"
+                android:textColorHint="@color/gray_dark"
                 android:layout_marginBottom="24dp"/>
 
             <Button

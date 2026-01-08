@@ -28,6 +28,7 @@ public class ChatListActivity extends AppCompatActivity {
     private DatabaseReference usersRef;
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
+    private boolean isFirstLoad = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +48,7 @@ public class ChatListActivity extends AppCompatActivity {
         toolbar.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == R.id.menu_refresh) {
                 Toast.makeText(this, "Refreshing user list...", Toast.LENGTH_SHORT).show();
+                isFirstLoad = true; // Reset flag to show toast after refresh
                 saveCurrentUserToDatabase();
                 // Force reload by removing and re-adding listener
                 if (valueEventListener != null) {
@@ -90,13 +92,14 @@ public class ChatListActivity extends AppCompatActivity {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         usersRef = database.getReference("users");
 
+        // Show loading status initially
+        updateStatusMessage("Loading users...");
+        
         // Save current user first, then load all users
         saveCurrentUserToDatabase();
         
-        // Load users from database (with a small delay to ensure current user is saved)
-        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-            loadUsers();
-        }, 500);
+        // Load users from database immediately
+        loadUsers();
 
         // Handle user click - open chat
         listViewUsers.setOnItemClickListener((parent, view, position, id) -> {
@@ -129,9 +132,11 @@ public class ChatListActivity extends AppCompatActivity {
                 if (dataSnapshot.exists() && dataSnapshot.hasChildren()) {
                     android.util.Log.d("ChatListActivity", "Found " + dataSnapshot.getChildrenCount() + " users in database");
                     int addedCount = 0;
+                    int totalUsers = 0;
                     for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        totalUsers++;
                         User user = snapshot.getValue(User.class);
-                        android.util.Log.d("ChatListActivity", "Processing user: " + (user != null ? user.getUserId() : "null"));
+                        android.util.Log.d("ChatListActivity", "Processing user " + totalUsers + ": " + (user != null ? (user.getUserId() + ", " + user.getName() + ", " + user.getEmail()) : "null"));
                         if (user != null && user.getUserId() != null && !user.getUserId().equals(currentUserId)) {
                             // Ensure user has a name, use email if name is missing
                             if (user.getName() == null || user.getName().isEmpty()) {
@@ -145,27 +150,41 @@ public class ChatListActivity extends AppCompatActivity {
                             userList.add(user);
                             addedCount++;
                             android.util.Log.d("ChatListActivity", "Added user: " + user.getName() + " (" + user.getEmail() + ")");
+                        } else if (user != null && user.getUserId() != null && user.getUserId().equals(currentUserId)) {
+                            android.util.Log.d("ChatListActivity", "Skipped current user: " + user.getUserId());
                         }
                     }
-                    android.util.Log.d("ChatListActivity", "Total users added to list: " + addedCount);
+                    android.util.Log.d("ChatListActivity", "Total users in database: " + totalUsers + ", Added to list: " + addedCount);
                 } else {
                     android.util.Log.d("ChatListActivity", "No users found in database or database is empty");
                 }
                 
                 adapter.notifyDataSetChanged();
                 
+                // Update status message
+                updateStatusMessage();
+                
                 if (userList.isEmpty()) {
                     android.util.Log.d("ChatListActivity", "User list is empty after loading");
-                    Toast.makeText(ChatListActivity.this, "No other users found. Make sure other users have signed up and logged in.", Toast.LENGTH_LONG).show();
+                    updateStatusMessage("No other users found. Make sure other users have signed up and logged in.");
                 } else {
                     android.util.Log.d("ChatListActivity", "Successfully loaded " + userList.size() + " users");
+                    // Show toast only on first load
+                    if (isFirstLoad) {
+                        Toast.makeText(ChatListActivity.this, 
+                            "Found " + userList.size() + " user(s) available for chat", 
+                            Toast.LENGTH_SHORT).show();
+                        isFirstLoad = false;
+                    }
                 }
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 android.util.Log.e("ChatListActivity", "Error loading users. Code: " + databaseError.getCode() + ", Message: " + databaseError.getMessage());
-                Toast.makeText(ChatListActivity.this, "Error loading users: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+                String errorMsg = "Error loading users: " + databaseError.getMessage();
+                Toast.makeText(ChatListActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
+                updateStatusMessage(errorMsg);
             }
         };
         
@@ -186,6 +205,44 @@ public class ChatListActivity extends AppCompatActivity {
         super.onStart();
         // Ensure user data is saved to database
         saveCurrentUserToDatabase();
+        // Reload users when activity starts/resumes
+        if (usersRef != null && valueEventListener == null) {
+            loadUsers();
+        }
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh user list when returning to this activity
+        if (usersRef != null && currentUser != null) {
+            // Only reload if not already loading
+            if (valueEventListener == null) {
+                updateStatusMessage("Loading users...");
+                loadUsers();
+            }
+        }
+    }
+    
+    private void updateStatusMessage() {
+        android.widget.TextView statusText = findViewById(R.id.statusText);
+        if (statusText != null) {
+            if (userList.isEmpty()) {
+                statusText.setText("No other users found. Make sure other users have signed up and logged in.");
+                statusText.setVisibility(android.view.View.VISIBLE);
+            } else {
+                statusText.setText("Found " + userList.size() + " user(s) available for chat");
+                statusText.setVisibility(android.view.View.VISIBLE);
+            }
+        }
+    }
+    
+    private void updateStatusMessage(String message) {
+        android.widget.TextView statusText = findViewById(R.id.statusText);
+        if (statusText != null) {
+            statusText.setText(message);
+            statusText.setVisibility(android.view.View.VISIBLE);
+        }
     }
 
     private void saveCurrentUserToDatabase() {
