@@ -18,5 +18,7 @@
     <item name="nav_signup" type="id"/>
     <item name="nav_sign_out" type="id"/>
     <item name="nav_ai_chatbot" type="id"/>
+    <item name="nav_object_detection" type="id"/>
+    <item name="nav_chat_users" type="id"/>
 </resources>
 

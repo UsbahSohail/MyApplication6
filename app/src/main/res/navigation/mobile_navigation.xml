@@ -22,4 +22,10 @@
         android:name="com.example.myapplication.ui.slideshow.SlideshowFragment"
         android:label="@string/menu_slideshow"
         tools:layout="@layout/fragment_slideshow" />
+
+    <fragment
+        android:id="@+id/nav_chatbot"
+        android:name="com.example.myapplication.ui.chatbot.ChatbotFragment"
+        android:label="@string/menu_ai_chatbot"
+        tools:layout="@layout/fragment_chatbot" />
 </navigation>

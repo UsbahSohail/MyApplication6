@@ -5,33 +5,84 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import com.google.ai.client.generativeai.GenerativeModel;
-import com.google.ai.client.generativeai.java.GenerativeModelFutures;
-import com.google.ai.client.generativeai.type.GenerateContentResponse;
-import com.google.ai.client.generativeai.type.Content;
-import com.google.ai.client.generativeai.type.TextPart;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
+import java.io.IOException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 /**
  * Service class for handling Google Gemini AI chatbot interactions
- * Provides natural language responses with app-specific context
+ * Uses REST API (allows gemini-2.5-flash support)
  */
 public class GeminiChatService {
     private static final String TAG = "GeminiChatService";
-    // IMPORTANT: Replace "YOUR_API_KEY_HERE" below with your actual Gemini API key
-    // Get your free API key from: https://aistudio.google.com/app/apikey
-    // Example: private static final String API_KEY_PLACEHOLDER = "AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz";
-    private static final String API_KEY_PLACEHOLDER = "AIzaSyBKzNu_MNDcWJRZeKsDsci-yM4ZSDxMsac";
+    private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     
-    private GenerativeModel model;
-    private GenerativeModelFutures modelFutures;
+    private static final String BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+    
+    /**
+     * Get API key from BuildConfig
+     */
+    private static String getApiKey() {
+        try {
+            String key = BuildConfig.GEMINI_API_KEY;
+            
+            // Remove quotes if present (from buildConfigField)
+            if (key != null && key.startsWith("\"") && key.endsWith("\"")) {
+                key = key.substring(1, key.length() - 1);
+            }
+            
+            // Clean and trim
+            if (key != null) {
+                key = key.trim().replaceAll("\\s+", "");
+            } else {
+                key = "";
+            }
+            
+            // Log for debugging (first 10 chars only for security)
+            if (!key.isEmpty()) {
+                String preview = key.length() > 10 ? key.substring(0, 10) + "..." : key;
+                Log.d(TAG, "Gemini API key loaded: " + preview + " (length: " + key.length() + ")");
+                
+                // Validate format (Gemini keys start with AIza)
+                if (!key.startsWith("AIza")) {
+                    Log.w(TAG, "⚠️ API key doesn't start with 'AIza'. Make sure it's a valid Gemini API key.");
+                }
+            } else {
+                Log.w(TAG, "⚠️ Gemini API key is empty or not configured");
+            }
+            
+            return key;
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Could not read API key from BuildConfig: " + e.getMessage());
+            Log.e(TAG, "Please ensure: 1) local.properties has GEMINI_API_KEY, 2) Gradle is synced, 3) Project is rebuilt");
+            return "";
+        }
+    }
+    
+    /**
+     * Get the Gemini API URL with API key
+     */
+    private static String getGeminiApiUrl() {
+        String apiKey = getApiKey();
+        return BASE_URL + "?key=" + apiKey;
+    }
+    
+    private final OkHttpClient httpClient;
+    private final Gson gson;
     private StringBuilder conversationContext;
     private final Executor executor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     
-    // App context for tokenization and better responses
+    // App context for better responses
     private static final String APP_CONTEXT = 
         "You are a helpful AI assistant for an e-commerce mobile application similar to Amazon. " +
         "The app has the following features:\n" +
@@ -56,88 +107,48 @@ public class GeminiChatService {
     }
     
     public GeminiChatService(Context context) {
-        // Context parameter kept for future use
-        initializeModel();
-    }
-    
-    private void initializeModel() {
-        try {
-            // Validate API key first
-            if (API_KEY_PLACEHOLDER == null || API_KEY_PLACEHOLDER.length() == 0 || 
-                API_KEY_PLACEHOLDER.equals("YOUR_API_KEY_HERE")) {
-                Log.e(TAG, "API key is not configured!");
-                return;
-            }
-            
-            // Initialize Gemini AI model
-            try {
-                model = new GenerativeModel(
-                    "gemini-1.5-flash",
-                    API_KEY_PLACEHOLDER
-                );
-                Log.d(TAG, "Using gemini-1.5-flash model");
-            } catch (Exception e) {
-                Log.w(TAG, "gemini-1.5-flash failed, trying gemini-pro. Error: " + e.getMessage());
-                try {
-                    model = new GenerativeModel(
-                        "gemini-pro",
-                        API_KEY_PLACEHOLDER
-                    );
-                    Log.d(TAG, "Using gemini-pro model");
-                } catch (Exception e2) {
-                    Log.e(TAG, "Failed to initialize model with both attempts", e2);
-                    String errorMsg = e2.getMessage();
-                    if (errorMsg != null && (errorMsg.contains("API key") || errorMsg.contains("invalid") || 
-                        errorMsg.contains("INVALID_ARGUMENT") || errorMsg.contains("PERMISSION_DENIED"))) {
-                        Log.e(TAG, "Invalid API key or permission denied. Please check your API key at https://aistudio.google.com/app/apikey");
-                    }
-                    return;
-                }
-            }
-            
-            if (model == null) {
-                Log.e(TAG, "Model is null after initialization");
-                return;
-            }
-            
-            modelFutures = GenerativeModelFutures.from(model);
-            conversationContext = new StringBuilder();
-            conversationContext.append(APP_CONTEXT).append("\n\n");
-            
-            Log.d(TAG, "Gemini model initialized successfully");
-        } catch (Exception e) {
-            Log.e(TAG, "Error initializing Gemini model: " + e.getMessage(), e);
+        this.httpClient = new OkHttpClient();
+        this.gson = new Gson();
+        this.conversationContext = new StringBuilder();
+        this.conversationContext.append(APP_CONTEXT).append("\n\n");
+        
+        // Validate API key on initialization
+        String apiKey = getApiKey();
+        if (apiKey == null || apiKey.trim().isEmpty() || 
+            apiKey.equals("\"\"") || apiKey.equals("") ||
+            apiKey.equals("YOUR_API_KEY_HERE") || apiKey.equals("YOUR_KEY_HERE")) {
+            Log.e(TAG, "❌ API key is NOT configured!");
+            Log.e(TAG, "Please add GEMINI_API_KEY=YOUR_KEY to local.properties file");
+            Log.e(TAG, "Get your key from: https://aistudio.google.com/app/apikey");
+        } else {
+            Log.d(TAG, "✅ Gemini REST API service initialized (using gemini-2.5-flash)");
         }
     }
     
     /**
-     * Send a message to the AI chatbot
+     * Send a message to the AI chatbot using REST API
      * @param message User's message
      * @param callback Callback for response or error
      */
     public void sendMessage(String message, ChatCallback callback) {
-        // Fix: Make message final for lambda usage
         final String userMessage = message;
         
-        // Check API key first
-        if (API_KEY_PLACEHOLDER == null || API_KEY_PLACEHOLDER.length() == 0 || 
-            API_KEY_PLACEHOLDER.equals("YOUR_API_KEY_HERE")) {
-            callback.onError("API key not configured. Please set your Gemini API key in GeminiChatService.java");
+        // Check API key
+        String apiKey = getApiKey();
+        if (apiKey == null || apiKey.trim().isEmpty() || 
+            apiKey.equals("\"\"") || apiKey.equals("") ||
+            apiKey.equals("YOUR_API_KEY_HERE") || apiKey.equals("YOUR_KEY_HERE")) {
+            String errorMsg = "API key not configured.\n\n" +
+                "Please:\n" +
+                "1. Open local.properties file\n" +
+                "2. Add: GEMINI_API_KEY=YOUR_KEY\n" +
+                "3. Get key from: https://aistudio.google.com/app/apikey\n" +
+                "4. Sync Gradle and rebuild";
+            Log.e(TAG, errorMsg);
+            callback.onError(errorMsg);
             return;
         }
         
-        if (model == null || modelFutures == null) {
-            // Try to reinitialize if not initialized
-            Log.d(TAG, "Model is null, attempting to reinitialize...");
-            initializeModel();
-            if (model == null || modelFutures == null) {
-                callback.onError("AI service not initialized. Please check API key configuration and internet connection.");
-                return;
-            }
-        }
-        
-        // Fix: Make modelFutures and conversationContext final for lambda
-        final GenerativeModelFutures finalModelFutures = modelFutures;
         final StringBuilder finalConversationContext = conversationContext;
         
         executor.execute(() -> {
@@ -146,19 +157,77 @@ public class GeminiChatService {
                 String prompt = finalConversationContext.toString() + 
                     "User: " + processedMessage + "\n\nAssistant:";
                 
-                // Fix: Use Content.Builder() with TextPart - the correct method for older Java SDK
-                // This SDK version requires: Content.Builder().addPart(new TextPart(prompt)).build()
-                Content content = new Content.Builder()
-                    .addPart(new TextPart(prompt))
+                // Build JSON request body
+                JsonObject requestBody = new JsonObject();
+                JsonArray contents = new JsonArray();
+                JsonObject content = new JsonObject();
+                JsonArray requestParts = new JsonArray();
+                JsonObject textPart = new JsonObject();
+                textPart.addProperty("text", prompt);
+                requestParts.add(textPart);
+                content.add("parts", requestParts);
+                contents.add(content);
+                requestBody.add("contents", contents);
+                
+                String jsonBody = gson.toJson(requestBody);
+                
+                Log.d(TAG, "Sending request to Gemini API...");
+                
+                // Create HTTP request
+                RequestBody body = RequestBody.create(jsonBody, JSON);
+                Request request = new Request.Builder()
+                    .url(getGeminiApiUrl())
+                    .post(body)
                     .build();
                 
-                // Generate response using Gemini AI
-                GenerateContentResponse response = finalModelFutures.generateContent(content).get();
+                // Execute request
+                Response response = httpClient.newCall(request).execute();
                 
-                // Extract the text response from the generated content
+                if (!response.isSuccessful()) {
+                    String errorBody = response.body() != null ? response.body().string() : "Unknown error";
+                    Log.e(TAG, "API request failed: " + response.code() + " - " + errorBody);
+                    
+                    String userErrorMessage = "Error: " + response.code();
+                    if (errorBody.contains("API key") || errorBody.contains("invalid") || 
+                        errorBody.contains("INVALID_ARGUMENT") || errorBody.contains("PERMISSION_DENIED")) {
+                        userErrorMessage = "Invalid API key.\n\n" +
+                            "Fixes:\n" +
+                            "1. Get key from: https://aistudio.google.com/app/apikey\n" +
+                            "2. Enable 'Generative Language API'\n" +
+                            "3. Add to local.properties: GEMINI_API_KEY=YOUR_KEY\n" +
+                            "4. Sync Gradle and rebuild\n" +
+                            "5. Check for spaces/newlines in key";
+                    } else if (errorBody.contains("quota") || errorBody.contains("QUOTA_EXCEEDED")) {
+                        userErrorMessage = "API quota exceeded. Please check your Gemini API quota.";
+                    }
+                    
+                    final String finalErrorMessage = userErrorMessage;
+                    mainHandler.post(() -> callback.onError(finalErrorMessage));
+                    return;
+                }
+                
+                // Parse response
+                String responseBody = response.body().string();
+                JsonObject jsonResponse = gson.fromJson(responseBody, JsonObject.class);
+                
+                // Extract text from response
                 String responseText = null;
-                if (response != null && response.getText() != null) {
-                    responseText = response.getText();
+                try {
+                    JsonArray candidates = jsonResponse.getAsJsonArray("candidates");
+                    if (candidates != null && candidates.size() > 0) {
+                        JsonObject candidate = candidates.get(0).getAsJsonObject();
+                        JsonObject contentObj = candidate.getAsJsonObject("content");
+                        if (contentObj != null) {
+                            JsonArray parts = contentObj.getAsJsonArray("parts");
+                            if (parts != null && parts.size() > 0) {
+                                JsonObject part = parts.get(0).getAsJsonObject();
+                                responseText = part.get("text").getAsString();
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Error parsing response: " + e.getMessage());
+                    Log.e(TAG, "Response body: " + responseBody);
                 }
                 
                 if (responseText != null && !responseText.isEmpty()) {
@@ -166,7 +235,6 @@ public class GeminiChatService {
                     finalConversationContext.append("User: ").append(processedMessage).append("\n\n");
                     finalConversationContext.append("Assistant: ").append(responseText).append("\n\n");
                     
-                    // Fix: Make responseText final for lambda
                     final String finalResponseText = responseText;
                     
                     // Return response on main thread
@@ -175,6 +243,16 @@ public class GeminiChatService {
                     mainHandler.post(() -> callback.onError("No response received from AI. Please try again."));
                 }
                 
+            } catch (IOException e) {
+                Log.e(TAG, "Network error sending message to Gemini", e);
+                String errorMsg = e.getMessage();
+                if (errorMsg != null && (errorMsg.contains("timeout") || errorMsg.contains("network"))) {
+                    errorMsg = "Network error. Please check your internet connection and try again.";
+                } else {
+                    errorMsg = "Error communicating with AI service: " + errorMsg;
+                }
+                final String finalErrorMessage = errorMsg;
+                mainHandler.post(() -> callback.onError(finalErrorMessage));
             } catch (Exception e) {
                 Log.e(TAG, "Error sending message to Gemini", e);
                 String actualError = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
@@ -184,11 +262,13 @@ public class GeminiChatService {
                 if (actualError != null) {
                     if (actualError.contains("API key") || actualError.contains("invalid") || 
                         actualError.contains("INVALID_ARGUMENT") || actualError.contains("PERMISSION_DENIED")) {
-                        userErrorMessage = "Invalid API key. Please check your Gemini API key in GeminiChatService.java";
-                    } else if (actualError.contains("network") || actualError.contains("timeout")) {
-                        userErrorMessage = "Network error. Please check your internet connection and try again.";
-                    } else if (actualError.contains("quota") || actualError.contains("QUOTA_EXCEEDED")) {
-                        userErrorMessage = "API quota exceeded. Please check your Gemini API quota.";
+                        userErrorMessage = "Invalid API key.\n\n" +
+                            "Fixes:\n" +
+                            "1. Get key from: https://aistudio.google.com/app/apikey\n" +
+                            "2. Enable 'Generative Language API'\n" +
+                            "3. Add to local.properties: GEMINI_API_KEY=YOUR_KEY\n" +
+                            "4. Sync Gradle and rebuild\n" +
+                            "5. Check for spaces/newlines in key";
                     } else {
                         userErrorMessage = "Error: " + actualError;
                     }
@@ -196,7 +276,6 @@ public class GeminiChatService {
                     userErrorMessage = "Error communicating with AI service.";
                 }
                 
-                // Fix: Make error message final for lambda
                 final String finalErrorMessage = userErrorMessage;
                 mainHandler.post(() -> callback.onError(finalErrorMessage));
             }
@@ -204,13 +283,10 @@ public class GeminiChatService {
     }
     
     /**
-     * Process and tokenize the message for better context understanding
-     * This helps the AI understand app-specific queries
+     * Process and enhance the message for better context understanding
      */
     private String processMessage(String message) {
         String lowerMessage = message.toLowerCase();
-        
-        // Build enhanced message with context hints (tokenization)
         StringBuilder processed = new StringBuilder(message);
         
         // Product-related keywords
@@ -261,8 +337,11 @@ public class GeminiChatService {
      * Check if API key is configured
      */
     public boolean isApiKeyConfigured() {
-        return model != null && API_KEY_PLACEHOLDER != null && 
-               !API_KEY_PLACEHOLDER.equals("YOUR_API_KEY_HERE") && 
-               API_KEY_PLACEHOLDER.trim().length() > 0;
+        String apiKey = getApiKey();
+        return apiKey != null && 
+               !apiKey.equals("\"\"") && 
+               !apiKey.equals("YOUR_API_KEY_HERE") && 
+               !apiKey.equals("YOUR_KEY_HERE") &&
+               apiKey.trim().length() > 0;
     }
 }

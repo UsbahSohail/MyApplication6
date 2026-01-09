@@ -131,30 +131,77 @@ public class ChatListActivity extends AppCompatActivity {
                 
                 if (dataSnapshot.exists() && dataSnapshot.hasChildren()) {
                     android.util.Log.d("ChatListActivity", "Found " + dataSnapshot.getChildrenCount() + " users in database");
+                    android.util.Log.d("ChatListActivity", "Current user ID: " + currentUserId);
+                    android.util.Log.d("ChatListActivity", "Current user email: " + (currentUser.getEmail() != null ? currentUser.getEmail() : "null"));
+                    
                     int addedCount = 0;
                     int totalUsers = 0;
+                    int skippedCurrentUser = 0;
+                    int invalidUsers = 0;
+                    
+                    // Log all user keys in database
+                    android.util.Log.d("ChatListActivity", "=== ALL USERS IN DATABASE ===");
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        android.util.Log.d("ChatListActivity", "User key: " + snapshot.getKey());
+                        android.util.Log.d("ChatListActivity", "User data: " + snapshot.getValue());
+                    }
+                    android.util.Log.d("ChatListActivity", "=== END USER LIST ===");
+                    
                     for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                         totalUsers++;
                         User user = snapshot.getValue(User.class);
-                        android.util.Log.d("ChatListActivity", "Processing user " + totalUsers + ": " + (user != null ? (user.getUserId() + ", " + user.getName() + ", " + user.getEmail()) : "null"));
-                        if (user != null && user.getUserId() != null && !user.getUserId().equals(currentUserId)) {
-                            // Ensure user has a name, use email if name is missing
-                            if (user.getName() == null || user.getName().isEmpty()) {
-                                String email = user.getEmail();
-                                if (email != null && !email.isEmpty()) {
-                                    user.setName(email.split("@")[0]);
-                                } else {
-                                    user.setName("User");
-                                }
-                            }
-                            userList.add(user);
-                            addedCount++;
-                            android.util.Log.d("ChatListActivity", "Added user: " + user.getName() + " (" + user.getEmail() + ")");
-                        } else if (user != null && user.getUserId() != null && user.getUserId().equals(currentUserId)) {
-                            android.util.Log.d("ChatListActivity", "Skipped current user: " + user.getUserId());
+                        
+                        if (user == null) {
+                            invalidUsers++;
+                            android.util.Log.w("ChatListActivity", "User " + totalUsers + " is NULL at key: " + snapshot.getKey());
+                            continue;
                         }
+                        
+                        android.util.Log.d("ChatListActivity", "Processing user " + totalUsers + ":");
+                        android.util.Log.d("ChatListActivity", "  - User ID: " + user.getUserId());
+                        android.util.Log.d("ChatListActivity", "  - Name: " + user.getName());
+                        android.util.Log.d("ChatListActivity", "  - Email: " + user.getEmail());
+                        android.util.Log.d("ChatListActivity", "  - Key: " + snapshot.getKey());
+                        
+                        if (user.getUserId() == null) {
+                            invalidUsers++;
+                            android.util.Log.w("ChatListActivity", "User " + totalUsers + " has NULL userId, skipping");
+                            continue;
+                        }
+                        
+                        if (user.getUserId().equals(currentUserId)) {
+                            skippedCurrentUser++;
+                            android.util.Log.d("ChatListActivity", "Skipped current user: " + user.getEmail() + " (ID: " + user.getUserId() + ")");
+                            continue;
+                        }
+                        
+                        // Ensure user has a name, use email if name is missing
+                        if (user.getName() == null || user.getName().isEmpty()) {
+                            String email = user.getEmail();
+                            if (email != null && !email.isEmpty()) {
+                                user.setName(email.split("@")[0]);
+                            } else {
+                                user.setName("User");
+                            }
+                        }
+                        
+                        // Ensure email is displayed properly
+                        if (user.getEmail() == null || user.getEmail().isEmpty()) {
+                            android.util.Log.w("ChatListActivity", "User " + user.getName() + " has no email, setting placeholder");
+                            user.setEmail("No email");
+                        }
+                        
+                        userList.add(user);
+                        addedCount++;
+                        android.util.Log.d("ChatListActivity", "✓ Added user: " + user.getName() + " (" + user.getEmail() + ")");
                     }
-                    android.util.Log.d("ChatListActivity", "Total users in database: " + totalUsers + ", Added to list: " + addedCount);
+                    
+                    android.util.Log.d("ChatListActivity", "=== SUMMARY ===");
+                    android.util.Log.d("ChatListActivity", "Total users in database: " + totalUsers);
+                    android.util.Log.d("ChatListActivity", "Added to list: " + addedCount);
+                    android.util.Log.d("ChatListActivity", "Skipped (current user): " + skippedCurrentUser);
+                    android.util.Log.d("ChatListActivity", "Invalid users: " + invalidUsers);
+                    android.util.Log.d("ChatListActivity", "Final list size: " + userList.size());
                 } else {
                     android.util.Log.d("ChatListActivity", "No users found in database or database is empty");
                 }
@@ -166,14 +213,22 @@ public class ChatListActivity extends AppCompatActivity {
                 
                 if (userList.isEmpty()) {
                     android.util.Log.d("ChatListActivity", "User list is empty after loading");
-                    updateStatusMessage("No other users found. Make sure other users have signed up and logged in.");
+                    updateStatusMessage("No other users found.\n\nTo see users:\n1. Make sure other users have signed up\n2. Other users must log in at least once\n3. Check Firebase Console - Database tab\n4. Verify database rules allow reading");
                 } else {
                     android.util.Log.d("ChatListActivity", "Successfully loaded " + userList.size() + " users");
+                    
+                    // Log all loaded users for debugging
+                    android.util.Log.d("ChatListActivity", "=== LOADED USERS ===");
+                    for (int i = 0; i < userList.size(); i++) {
+                        User u = userList.get(i);
+                        android.util.Log.d("ChatListActivity", (i + 1) + ". " + u.getName() + " - " + u.getEmail());
+                    }
+                    android.util.Log.d("ChatListActivity", "=== END LOADED USERS ===");
+                    
                     // Show toast only on first load
                     if (isFirstLoad) {
-                        Toast.makeText(ChatListActivity.this, 
-                            "Found " + userList.size() + " user(s) available for chat", 
-                            Toast.LENGTH_SHORT).show();
+                        String message = "Found " + userList.size() + " user(s) available for chat";
+                        Toast.makeText(ChatListActivity.this, message, Toast.LENGTH_SHORT).show();
                         isFirstLoad = false;
                     }
                 }

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<users>
+    <!-- Sample users stored in XML for offline access and testing -->
+    <!-- These will be displayed if Firebase is unavailable or empty -->
+    
+    <user>
+        <userId>demo_user_1</userId>
+        <name>John Smith</name>
+        <email>john.smith@example.com</email>
+    </user>
+    
+    <user>
+        <userId>demo_user_2</userId>
+        <name>Sarah Johnson</name>
+        <email>sarah.johnson@example.com</email>
+    </user>
+    
+    <user>
+        <userId>demo_user_3</userId>
+        <name>Michael Brown</name>
+        <email>michael.brown@example.com</email>
+    </user>
+    
+    <user>
+        <userId>demo_user_4</userId>
+        <name>Emily Davis</name>
+        <email>emily.davis@example.com</email>
+    </user>
+    
+    <user>
+        <userId>demo_user_5</userId>
+        <name>David Wilson</name>
+        <email>david.wilson@example.com</email>
+    </user>
+    
+    <user>
+        <userId>demo_user_6</userId>
+        <name>Jessica Martinez</name>
+        <email>jessica.martinez@example.com</email>
+    </user>
+    
+    <user>
+        <userId>demo_user_7</userId>
+        <name>Robert Taylor</name>
+        <email>robert.taylor@example.com</email>
+    </user>
+    
+    <user>
+        <userId>demo_user_8</userId>
+        <name>Amanda Anderson</name>
+        <email>amanda.anderson@example.com</email>
+    </user>
+</users>
+

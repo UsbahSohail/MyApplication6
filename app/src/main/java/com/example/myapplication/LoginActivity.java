@@ -124,24 +124,14 @@ public class LoginActivity extends AppCompatActivity {
                     });
         });
 
-        // Forgot Password functionality
+        // Forgot Password functionality - navigate to ResetPasswordActivity
         tvForgotPassword.setOnClickListener(v -> {
             String email = etEmail.getText().toString().trim();
-            
-            // If email field is empty, show dialog to enter email
-            if (TextUtils.isEmpty(email)) {
-                showEmailInputDialog();
-                return;
+            Intent intent = new Intent(LoginActivity.this, ResetPasswordActivity.class);
+            if (!TextUtils.isEmpty(email) && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                intent.putExtra("email", email);
             }
-
-            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                etEmail.setError("Enter a valid email address");
-                etEmail.requestFocus();
-                return;
-            }
-
-            // Show dialog to confirm password reset
-            showPasswordResetConfirmation(email);
+            startActivity(intent);
         });
 
         // Sign Up link - navigate to SignupActivity
@@ -150,173 +140,6 @@ public class LoginActivity extends AppCompatActivity {
             finish();
         });
     }
-
-    /**
-     * Show dialog to input email if email field is empty
-     */
-    private void showEmailInputDialog() {
-        final EditText input = new EditText(this);
-        input.setHint("Enter your email address");
-        input.setInputType(android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
-        
-        new AlertDialog.Builder(this)
-                .setTitle("Reset Password")
-                .setMessage("Enter your registered email address to receive a password reset link.")
-                .setView(input)
-                .setPositiveButton("Send Reset Link", (dialog, which) -> {
-                    String email = input.getText().toString().trim();
-                    if (TextUtils.isEmpty(email)) {
-                        Toast.makeText(this, "Please enter your email address", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                        Toast.makeText(this, "Please enter a valid email address", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    showPasswordResetConfirmation(email);
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
-    }
-
-    /**
-     * Show confirmation dialog before sending password reset email
-     */
-    private void showPasswordResetConfirmation(String email) {
-        new AlertDialog.Builder(this)
-                .setTitle("Reset Password")
-                .setMessage("We will send a password reset link to:\n\n" + email + "\n\nPlease check your inbox and spam folder.")
-                .setPositiveButton("Send Link", (dialog, which) -> {
-                    sendPasswordResetEmail(email);
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
-    }
-
-    /**
-     * Send password reset email using Firebase Authentication
-     * This will send a REAL email with a link that allows the user to reset their password
-     * The email is sent by Firebase Authentication service automatically
-     */
-    private void sendPasswordResetEmail(String email) {
-        Log.d("LoginActivity", "Sending password reset email to: " + email);
-        
-        // Show loading indicator
-        android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(this);
-        progressDialog.setMessage("Sending password reset link...");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
-        
-        // Send password reset email via Firebase Authentication
-        // Firebase sends REAL emails automatically - no additional setup needed in code
-        // The email is sent from Firebase's email service (noreply@<project-id>.firebaseapp.com)
-        // 
-        // IMPORTANT: To ensure emails are sent:
-        // 1. Go to Firebase Console > Authentication > Templates > Password reset
-        // 2. Make sure the email template is enabled
-        // 3. Verify your Firebase project has email sending enabled
-        // 4. Customize the email template if needed (optional)
-        //
-        // The email will contain a reset link that expires in 1 hour
-        mAuth.sendPasswordResetEmail(email)
-                .addOnCompleteListener(task -> {
-                    progressDialog.dismiss();
-                    
-                    if (task.isSuccessful()) {
-                        Log.d("LoginActivity", "Password reset email sent successfully to: " + email);
-                        Log.d("LoginActivity", "Email sent from: Firebase Authentication Service");
-                        Log.d("LoginActivity", "Check email inbox for password reset link");
-                        
-                        // Show success dialog with detailed instructions
-                        new AlertDialog.Builder(this)
-                                .setTitle("✓ Reset Link Sent!")
-                                .setMessage("A password reset email has been sent to:\n\n" + 
-                                           email + 
-                                           "\n\n📧 WHAT TO DO:\n" +
-                                           "1. Check your email inbox (it may take 1-2 minutes)\n" +
-                                           "2. Look for an email from Firebase Authentication\n" +
-                                           "3. Check your spam/junk folder if you don't see it\n" +
-                                           "4. Click the 'Reset Password' link in the email\n" +
-                                           "5. Create your new password in the browser\n" +
-                                           "6. Return to the app and login with your new password\n\n" +
-                                           "⚠️ NOTE:\n" +
-                                           "• The reset link expires in 1 hour\n" +
-                                           "• The link will open in your web browser\n" +
-                                           "• If you don't receive the email, check your spam folder")
-                                .setPositiveButton("Got it!", null)
-                                .setIcon(android.R.drawable.ic_dialog_email)
-                                .show();
-                        
-                        Toast.makeText(LoginActivity.this,
-                                "✓ Password reset email sent! Check your inbox.",
-                                Toast.LENGTH_LONG).show();
-                    } else {
-                        // Get the actual error for debugging
-                        String errorMessage = "Failed to send password reset email.";
-                        Exception exception = task.getException();
-                        
-                        if (exception != null) {
-                            String exceptionMessage = exception.getMessage();
-                            String exceptionClass = exception.getClass().getSimpleName();
-                            
-                            // Log the full error for debugging
-                            Log.e("LoginActivity", "Password reset error: " + exceptionClass + " - " + exceptionMessage, exception);
-                            exception.printStackTrace();
-                            
-                            if (exceptionMessage != null) {
-                                if (exceptionMessage.contains("user record does not exist") ||
-                                    exceptionMessage.contains("There is no user record") ||
-                                    exceptionMessage.contains("USER_NOT_FOUND")) {
-                                    errorMessage = "No account found with this email address.\n\n" +
-                                                  "Please verify the email address or sign up first.";
-                                } else if (exceptionMessage.contains("invalid email") ||
-                                           exceptionMessage.contains("INVALID_EMAIL")) {
-                                    errorMessage = "Invalid email address format.\n\nPlease check and try again.";
-                                } else if (exceptionMessage.contains("network") || 
-                                           exceptionMessage.contains("Network") ||
-                                           exceptionMessage.contains("timeout") ||
-                                           exceptionMessage.contains("NETWORK_ERROR")) {
-                                    errorMessage = "Network error. Please check your internet connection and try again.";
-                                } else if (exceptionMessage.contains("too many requests") ||
-                                           exceptionMessage.contains("TOO_MANY_ATTEMPTS")) {
-                                    errorMessage = "Too many password reset attempts.\n\nPlease wait a few minutes before trying again.";
-                                } else {
-                                    // Show detailed error for debugging
-                                    errorMessage = "Error: " + exceptionMessage + 
-                                                  "\n\nPlease check:\n" +
-                                                  "1. Your internet connection\n" +
-                                                  "2. That the email address is correct\n" +
-                                                  "3. Your Firebase project email settings\n" +
-                                                  "\nFull error: " + exceptionClass;
-                                }
-                            } else {
-                                errorMessage = "Unknown error occurred. Please try again later.\n\nError type: " + exceptionClass;
-                            }
-                        }
-                        
-                        new AlertDialog.Builder(this)
-                                .setTitle("❌ Error Sending Email")
-                                .setMessage(errorMessage + 
-                                           "\n\n💡 TROUBLESHOOTING:\n" +
-                                           "• Verify your internet connection\n" +
-                                           "• Make sure the email address is correct\n" +
-                                           "• Check Firebase Console email settings\n" +
-                                           "• Ensure Firebase Authentication is enabled")
-                                .setPositiveButton("OK", null)
-                                .setNeutralButton("Retry", (dialog, which) -> sendPasswordResetEmail(email))
-                                .setIcon(android.R.drawable.ic_dialog_alert)
-                                .show();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    progressDialog.dismiss();
-                    Log.e("LoginActivity", "Failed to send password reset email", e);
-                    Toast.makeText(LoginActivity.this,
-                            "Failed to send email. Please check your connection.",
-                            Toast.LENGTH_SHORT).show();
-                });
-    }
-    
 
     @Override
     protected void onStart() {

@@ -24,4 +24,12 @@
     <string name="data_receive_age">Age: %1$d years</string>
     <string name="menu_ai_chatbot">AI Assistant</string>
     <string name="ai_chatbot_hint">Ask me anything about the app...</string>
+    <string name="reset_password_button">Send Reset Link</string>
+    <string name="error_email_required">Email is required</string>
+    <string name="error_email_invalid">Please enter a valid email address</string>
+    <string name="chat_users_title">Chat with Users</string>
+    <string name="chat_users_subtitle">Select a user to chat with:</string>
+    <string name="no_users_found">No other users found. Make sure other users have signed up and logged in.</string>
+    <string name="menu_object_detection">Object Detection (YOLO)</string>
+    <string name="menu_chat_users">Chat with Users</string>
 </resources>
