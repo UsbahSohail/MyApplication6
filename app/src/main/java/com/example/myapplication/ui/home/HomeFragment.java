@@ -38,29 +38,45 @@ public class HomeFragment extends Fragment {
     }
     
     private void setupCardClickListeners() {
+        android.util.Log.d("HomeFragment", "Setting up card click listeners...");
+        
         // Hugging Face Object Detection Card
         if (binding.cardObjectDetection != null) {
+            android.util.Log.d("HomeFragment", "✓ Found Hugging Face card");
             binding.cardObjectDetection.setOnClickListener(v -> {
+                android.util.Log.d("HomeFragment", "Hugging Face card clicked!");
                 Intent intent = new Intent(getContext(), ObjectDetectionActivity.class);
                 startActivity(intent);
             });
+        } else {
+            android.util.Log.e("HomeFragment", "❌ Hugging Face card is NULL!");
         }
         
         // AI Chatbot Card
         if (binding.cardAIChatbot != null) {
+            android.util.Log.d("HomeFragment", "✓ Found AI Chatbot card");
             binding.cardAIChatbot.setOnClickListener(v -> {
+                android.util.Log.d("HomeFragment", "AI Chatbot card clicked!");
                 Intent intent = new Intent(getContext(), AIChatbotActivity.class);
                 startActivity(intent);
             });
+        } else {
+            android.util.Log.e("HomeFragment", "❌ AI Chatbot card is NULL!");
         }
         
         // Chat with Users Card
         if (binding.cardChatUsers != null) {
+            android.util.Log.d("HomeFragment", "✓ Found Chat Users card");
             binding.cardChatUsers.setOnClickListener(v -> {
+                android.util.Log.d("HomeFragment", "Chat Users card clicked!");
                 Intent intent = new Intent(getContext(), UsersListActivity.class);
                 startActivity(intent);
             });
+        } else {
+            android.util.Log.e("HomeFragment", "❌ Chat Users card is NULL!");
         }
+        
+        android.util.Log.d("HomeFragment", "Finished setting up card click listeners");
     }
 
     @Override
