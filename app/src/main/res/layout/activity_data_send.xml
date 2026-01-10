@@ -61,7 +61,9 @@
                 android:padding="12dp"
                 android:layout_marginBottom="16dp"
                 android:background="@drawable/rounded_input_bg"
-                android:fontFamily="sans-serif-medium" />
+                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/black"
+                android:textColorHint="@color/gray_dark" />
 
             <TextView
                 android:layout_width="wrap_content"

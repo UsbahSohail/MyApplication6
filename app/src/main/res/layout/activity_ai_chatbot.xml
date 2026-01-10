@@ -52,7 +52,9 @@
             android:maxLines="5"
             android:gravity="top|start"
             android:imeOptions="actionSend"
-            android:inputType="textMultiLine" />
+            android:inputType="textMultiLine"
+            android:textColor="@color/black"
+            android:textColorHint="@color/gray_dark" />
 
         <ProgressBar
             android:id="@+id/progressBar"

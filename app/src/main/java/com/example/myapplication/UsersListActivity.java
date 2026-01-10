@@ -49,6 +49,10 @@ public class UsersListActivity extends AppCompatActivity {
         // Save current user to database first (if not already saved)
         saveCurrentUserToDatabase(currentUser);
         
+        // IMPORTANT: Users must exist in Realtime Database to show in list
+        // If users are missing, login with each account to trigger saveUserToDatabase()
+        // This happens automatically on login/signup
+        
         // Set toolbar title
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle(R.string.chat_users_title);

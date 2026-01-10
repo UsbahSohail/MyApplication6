@@ -49,6 +49,8 @@
                 android:hint="Full name"
                 android:padding="12dp"
                 android:background="@drawable/rounded_input_bg"
+                android:textColor="@color/black"
+                android:textColorHint="@color/gray_dark"
                 android:layout_marginBottom="16dp" />
 
             <DatePicker

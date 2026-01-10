@@ -40,7 +40,9 @@
             android:padding="12dp"
             android:background="@drawable/rounded_input_bg"
             android:maxLines="5"
-            android:gravity="top|start" />
+            android:gravity="top|start"
+            android:textColor="@color/black"
+            android:textColorHint="@color/gray_dark" />
 
         <Button
             android:id="@+id/buttonSend"
